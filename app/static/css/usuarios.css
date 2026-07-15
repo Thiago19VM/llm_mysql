@@ -1,0 +1,847 @@
+/* =========================================================
+   static/css/usuarios.css
+   Página: Funcionário > Usuários
+/* =========================================================
+   1) ÁREA PRINCIPAL / LARGURA DA PÁGINA
+   ========================================================= */
+
+.page-usuarios .app .content{
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.page-usuarios .app .content .content-inner{
+  width: 100%;
+  max-width: 1800px; /* mantém o padrão largo usado no painel */
+}
+
+
+/* =========================================================
+   2) CARDS DE MÉTRICAS
+   ========================================================= */
+
+.stats-grid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+
+.stat-card{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .92);
+}
+
+.stat-label{
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.stat-value{
+  font-size: 16px;
+  font-weight: 950;
+  color: #233553;
+}
+
+
+/* =========================================================
+   3) FILTROS
+   Desktop: 1 linha
+   Tablet/Mobile: quebra em colunas menores
+   ========================================================= */
+
+.page-usuarios .filters-grid--users{
+  display: grid;
+  grid-template-columns: 1.5fr 1.6fr 1fr auto; /* Nome | Email | Status | Ações */
+  gap: 14px;
+  align-items: end;
+}
+
+
+/* =========================================================
+   4) TABELA DE USUÁRIOS
+   ========================================================= */
+
+/* célula nome + avatar */
+.u-cell{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* avatar principal da tabela */
+.u-avatar{
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eef2f7;
+  border: 1px solid #dbe3ef;
+  position: relative;
+}
+
+.u-avatar::before,
+.u-avatar::after{
+  content: none !important;
+  display: none !important;
+}
+
+/* imagem real do usuário */
+.u-avatar__img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* fallback quando não existe foto */
+.u-avatar__fallback{
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: linear-gradient(135deg, #0284c7, #06b6d4);
+  color: #fff;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* nome do usuário */
+.tbl-users .u-name{
+  min-width: 0;
+  font-weight: 950;
+  color: #233553;
+}
+
+/* email */
+.tbl-users .u-email{
+  color: var(--muted);
+  font-weight: 800;
+  word-break: break-word;
+}
+
+/* contador de reservas */
+.u-count{
+  font-weight: 900;
+  color: #233553;
+}
+
+
+/* =========================================================
+   5) BADGES DE STATUS
+   ========================================================= */
+
+.badge.bad{
+  color: #7a0c08;
+  background: rgba(220, 38, 38, .12);
+  border-color: rgba(220, 38, 38, .24);
+}
+
+.badge.muted{
+  color: #334155;
+  background: rgba(148, 163, 184, .16);
+  border-color: rgba(148, 163, 184, .30);
+}
+
+
+/* =========================================================
+   6) COLUNA DE AÇÕES / BOTÃO ENGRENAGEM
+   ========================================================= */
+
+.u-actions{
+  text-align: right;
+}
+
+.gear-btn{
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+
+  border: 1px solid rgba(31, 111, 185, .22);
+  border-radius: 10px;
+  background: rgba(31, 111, 185, .12);
+  color: var(--brand);
+  cursor: pointer;
+  font-weight: 950;
+
+  transition:
+    transform .08s ease,
+    background .12s ease,
+    border-color .12s ease,
+    box-shadow .12s ease;
+}
+
+.gear-btn:hover{
+  background: rgba(31, 111, 185, .18);
+  border-color: rgba(31, 111, 185, .30);
+}
+
+.gear-btn:active{
+  transform: translateY(1px);
+}
+
+.gear-btn:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(31, 111, 185, .18);
+}
+
+
+/* =========================================================
+   7) MODAL PEQUENO
+   ========================================================= */
+
+.modal-card.modal-card--sm{
+  width: min(560px, 94vw);
+}
+
+.user-menu-body{
+  padding: 16px;
+}
+
+.user-menu-meta{
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.user-menu-name{
+  font-size: 14px;
+  font-weight: 950;
+  color: #233553;
+}
+
+.user-menu-sub{
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.user-menu-actions{
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 10px;
+}
+
+
+/* =========================================================
+   8) MODAL GRANDE - DETALHES DO USUÁRIO (UD)
+   ========================================================= */
+
+/* controle de visibilidade */
+.ud-backdrop[aria-hidden="true"],
+.ud-modal[aria-hidden="true"]{
+  display: none;
+}
+
+/* fundo escuro */
+.ud-backdrop[aria-hidden="false"]{
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: block;
+
+  background: rgba(2, 6, 23, .52);
+  backdrop-filter: blur(3px);
+}
+
+/* container do modal */
+.ud-modal[aria-hidden="false"]{
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+/* card principal */
+.ud-card{
+  width: min(1040px, 96vw);
+  max-height: calc(100vh - 36px);
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, .12);
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 25px 80px rgba(2, 6, 23, .35);
+}
+
+
+/* =========================================================
+   9) CABEÇALHO DO MODAL GRANDE
+   ========================================================= */
+
+.ud-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, .10);
+  background: linear-gradient(
+    180deg,
+    rgba(31, 111, 185, .10),
+    rgba(255, 255, 255, .92)
+  );
+}
+
+.ud-profile{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ud-meta{
+  min-width: 0;
+}
+
+.ud-name{
+  margin: 0;
+  font-size: 16px;
+  font-weight: 950;
+  color: #0f172a;
+}
+
+.ud-sub{
+  margin-top: 4px;
+}
+
+/* avatar do modal */
+.ud-avatar{
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  overflow: hidden;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(31, 111, 185, .10);
+  border: 1px solid rgba(31, 111, 185, .18);
+}
+
+.ud-avatar-img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.ud-avatar-fallback{
+  font-weight: 950;
+  letter-spacing: .5px;
+  color: rgba(15, 23, 42, .75);
+}
+
+/* botão fechar do header */
+.ud-close{
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, .12);
+  background: rgba(255, 255, 255, .85);
+}
+
+.ud-close:hover{
+  background: rgba(15, 23, 42, .04);
+}
+
+
+/* =========================================================
+   10) CHIPS / META DO USUÁRIO
+   ========================================================= */
+
+.ud-chips{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ud-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, .12);
+  background: rgba(15, 23, 42, .04);
+
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(15, 23, 42, .80);
+}
+
+.ud-chip.is-online{
+  border-color: rgba(16, 185, 129, .25);
+  background: rgba(16, 185, 129, .12);
+  color: rgba(6, 95, 70, .95);
+}
+
+.ud-chip.is-offline{
+  border-color: rgba(148, 163, 184, .35);
+  background: rgba(148, 163, 184, .16);
+  color: rgba(15, 23, 42, .65);
+}
+
+.ud-mini{
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(15, 23, 42, .62);
+}
+
+
+/* =========================================================
+   11) TABS DO MODAL GRANDE
+   ========================================================= */
+
+.ud-tabs{
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+
+  border-bottom: 1px solid rgba(15, 23, 42, .10);
+  background: rgba(255, 255, 255, .90);
+}
+
+.ud-tab{
+  padding: 8px 12px;
+  border: 1px solid rgba(15, 23, 42, .12);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .04);
+
+  font-size: 12px;
+  font-weight: 950;
+  color: rgba(15, 23, 42, .80);
+  cursor: pointer;
+
+  transition:
+    transform .08s ease,
+    background .12s ease,
+    border-color .12s ease;
+}
+
+.ud-tab:hover{
+  background: rgba(15, 23, 42, .06);
+}
+
+.ud-tab:active{
+  transform: translateY(1px);
+}
+
+.ud-tab.is-active{
+  background: rgba(31, 111, 185, .14);
+  border-color: rgba(31, 111, 185, .30);
+  color: #1f3a66;
+}
+
+
+/* =========================================================
+   12) CORPO DO MODAL GRANDE
+   ========================================================= */
+
+.ud-body{
+  flex: 1;
+  overflow: auto;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, .92);
+}
+
+.ud-body::-webkit-scrollbar{
+  width: 10px;
+}
+
+.ud-body::-webkit-scrollbar-thumb{
+  border: 3px solid rgba(255, 255, 255, .92);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .15);
+}
+
+.ud-body::-webkit-scrollbar-track{
+  background: transparent;
+}
+
+.ud-panel{
+  display: none;
+}
+
+.ud-panel.is-active{
+  display: block;
+}
+
+.ud-modal,
+.ud-modal *{
+  word-break: normal !important;
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   13) PAINEL DE ENDEREÇO / GRID DE DADOS
+   ========================================================= */
+
+.ud-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.ud-kv{
+  min-width: 0;
+  padding: 10px 12px;
+
+  border: 1px solid rgba(15, 23, 42, .10);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, .04);
+}
+
+.ud-kv-wide{
+  grid-column: 1 / -1;
+}
+
+.ud-kv span{
+  display: block;
+  margin-bottom: 4px;
+
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .2px;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, .55);
+}
+
+.ud-kv strong{
+  display: block;
+  line-height: 1.25;
+  word-break: break-word;
+
+  font-size: 13px;
+  font-weight: 950;
+  color: rgba(15, 23, 42, .90);
+}
+
+/* valor vazio */
+.ud-kv strong:empty{
+  color: rgba(15, 23, 42, .45);
+}
+
+
+/* =========================================================
+   14) BLOCOS DE HISTÓRICO / FÓRUM / LISTAS
+   ========================================================= */
+
+.ud-block{
+  margin-bottom: 14px;
+}
+
+.ud-block-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.ud-block-head h3{
+  margin: 0;
+  font-size: 14px;
+  font-weight: 950;
+  color: rgba(15, 23, 42, .90);
+}
+
+.ud-count{
+  min-width: 30px;
+  height: 22px;
+  padding: 0 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(15, 23, 42, .12);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .04);
+
+  font-size: 12px;
+  font-weight: 950;
+  color: rgba(15, 23, 42, .70);
+}
+
+.ud-block-body{
+  display: grid;
+  gap: 10px;
+}
+
+
+/* =========================================================
+   15) CARDS INTERNOS DO MODAL
+   ========================================================= */
+
+.ud-item{
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, .10);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, .05);
+}
+
+.ud-item-main{
+  flex: 1;
+  min-width: 0;
+}
+
+.ud-item-media{
+  width: 48px;
+  flex: 0 0 48px;
+}
+
+/* capa */
+.ud-cover{
+  width: 48px;
+  height: 64px;
+  display: block;
+  object-fit: cover;
+
+  border: 1px solid rgba(15, 23, 42, .10);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, .04);
+}
+
+.ud-cover-fallback{
+  width: 48px;
+  height: 64px;
+  border: 1px solid rgba(15, 23, 42, .10);
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(31, 111, 185, .12),
+    rgba(15, 23, 42, .04)
+  );
+}
+
+/* título */
+.ud-item-title{
+  margin-bottom: 6px;
+  line-height: 1.25;
+  font-weight: 950;
+  color: rgba(15, 23, 42, .92);
+}
+
+.ud-item-title a{
+  color: inherit;
+  text-decoration: none;
+}
+
+.ud-item-title a:hover{
+  text-decoration: underline;
+}
+
+/* área de badges e infos */
+.ud-item-sub{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ud-badge{
+  display: inline-flex;
+  align-items: center;
+
+  padding: 4px 9px;
+  border: 1px solid rgba(15, 23, 42, .12);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .04);
+
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(15, 23, 42, .75);
+}
+
+.ud-badge.is-warn{
+  border-color: rgba(234, 179, 8, .28);
+  background: rgba(234, 179, 8, .14);
+  color: rgba(113, 63, 18, .95);
+}
+
+.ud-muted{
+  font-size: 12px;
+  font-weight: 850;
+  color: rgba(15, 23, 42, .62);
+}
+
+.ud-item-mini{
+  margin-top: 6px;
+  line-height: 1.35;
+  color: rgba(15, 23, 42, .72);
+}
+
+
+/* =========================================================
+   16) ESTADOS VAZIOS
+   ========================================================= */
+
+.ud-empty{
+  padding: 14px;
+  border: 1px dashed rgba(15, 23, 42, .18);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, .02);
+}
+
+.ud-empty-title{
+  margin-bottom: 4px;
+  font-weight: 950;
+  color: rgba(15, 23, 42, .85);
+}
+
+.ud-empty-sub{
+  font-size: 12px;
+  font-weight: 850;
+  color: rgba(15, 23, 42, .62);
+}
+
+
+/* =========================================================
+   17) FOOTER DO MODAL GRANDE
+   ========================================================= */
+
+.ud-foot{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px 16px;
+  border-top: 1px solid rgba(15, 23, 42, .10);
+  background: rgba(255, 255, 255, .92);
+}
+
+.ud-foot-left{
+  font-size: 12px;
+  font-weight: 850;
+  color: rgba(15, 23, 42, .62);
+}
+
+
+/* =========================================================
+   18) SKELETON / CARREGAMENTO
+   ========================================================= */
+
+.ud-skel{
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, .10);
+  border-radius: 14px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, .04),
+    rgba(15, 23, 42, .08),
+    rgba(15, 23, 42, .04)
+  );
+  background-size: 200% 100%;
+  animation: udShimmer 1.2s infinite linear;
+}
+
+.ud-avatar-skel{
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, .06),
+    rgba(15, 23, 42, .12),
+    rgba(15, 23, 42, .06)
+  );
+  background-size: 200% 100%;
+  animation: udShimmer 1.2s infinite linear;
+}
+
+@keyframes udShimmer{
+  0%{
+    background-position: 200% 0;
+  }
+  100%{
+    background-position: -200% 0;
+  }
+}
+
+
+/* =========================================================
+   19) RESPONSIVIDADE
+   ========================================================= */
+
+@media (max-width: 1180px){
+  .page-usuarios .filters-grid--users{
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px){
+  .stats-grid{
+    grid-template-columns: 1fr;
+  }
+
+  .page-usuarios .filters-grid--users{
+    grid-template-columns: 1fr;
+  }
+
+  .ud-grid{
+    grid-template-columns: 1fr;
+  }
+
+  .ud-tabs{
+    flex-wrap: wrap;
+  }
+
+  .ud-foot{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ud-foot-right,
+  .ud-foot-left{
+    width: 100%;
+  }
+}
+
+.brand__logo{
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}

@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Acervo • LiteraWEB</title>
+  {% include "_includes/head_favicon.html" %}
+  {% set per_page_value = request.args.get('per_page', '') %}
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/acervo.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/notificacoes.css') }}">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: "0 18px 45px rgba(10,15,25,.10)",
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="page-acervo relative min-h-screen flex flex-col text-slate-900 overflow-x-hidden">
+
+  <!-- Fundo -->
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute -top-28 -left-28 h-96 w-96 rounded-full bg-sky-400/25 blur-3xl"></div>
+    <div class="absolute -top-24 -right-32 h-[28rem] w-[28rem] rounded-full bg-cyan-400/20 blur-3xl"></div>
+    <div class="absolute top-[45%] -left-24 h-80 w-80 rounded-full bg-indigo-400/14 blur-3xl"></div>
+    <div class="absolute bottom-[-6rem] right-[10%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-400/12 blur-3xl"></div>
+  </div>
+
+  {% include "_includes/navbar.html" %}
+
+  {% set q_value = request.args.get('q', '') %}
+  {% set genero_value = request.args.get('genero', '') %}
+  {% set ano_value = request.args.get('ano', '') %}
+  {% set editora_value = request.args.get('editora', '') %}
+  {% set tipo_capa_value = request.args.get('tipo_capa', '') %}
+  {% set ordenar_value = request.args.get('ordenar', 'recentes') %}
+
+  {% set lista_generos = generos if generos is defined and generos else [] %}
+  {% set lista_anos = anos if anos is defined and anos else [] %}
+  {% set lista_editoras = editoras if editoras is defined and editoras else [] %}
+  {% set lista_tipos_capa = tipos_capa if tipos_capa is defined and tipos_capa else [] %}
+
+  <main class="flex-1 py-8">
+    <div class="container">
+
+      <!-- Cabeçalho -->
+      <div class="mb-6 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <h1 class="mt-3 text-3xl md:text-4xl font-black tracking-tight text-slate-900">
+            Nosso acervo
+          </h1>
+
+          <p class="mt-2 max-w-2xl text-sm md:text-base text-slate-600 font-medium">
+            Explore os livros por título, autor, gênero, ano, editora e tipo de capa.
+          </p>
+        </div>
+
+        <div
+          id="acervo-counter"
+          class="rounded-2xl border border-white/60 bg-white/70 px-4 py-3 text-sm text-slate-600 font-semibold shadow-soft backdrop-blur"
+        >
+          Mostrando
+          <span class="font-extrabold text-slate-900">{{ start }}</span>–<span class="font-extrabold text-slate-900">{{ end }}</span>
+          de
+          <span class="font-extrabold text-slate-900">{{ total }}</span> livros
+        </div>
+      </div>
+
+      <!-- Layout principal -->
+      <div class="grid gap-6 xl:grid-cols-[290px_minmax(0,1fr)] 2xl:grid-cols-[310px_minmax(0,1fr)]">
+
+        <!-- Sidebar -->
+        <aside class="xl:sticky xl:top-24 xl:self-start">
+          <section class="rounded-3xl bg-gradient-to-br from-sky-200/60 via-white/35 to-indigo-200/60 p-[1px] shadow-soft">
+            <div class="rounded-3xl border border-white/40 bg-white/80 p-4 md:p-5 backdrop-blur">
+
+              <div class="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-base font-black text-slate-900">Filtros</h2>
+                  <p class="text-xs font-medium text-slate-500">Refine sua busca</p>
+                </div>
+              </div>
+
+              <form id="acervo-filtros-form" method="get" action="{{ url_for('main.acervo') }}" class="space-y-4">
+                <input type="hidden" name="page" value="1">
+                <input type="hidden" name="per_page" id="per_page_input" value="{{ per_page_value }}">
+
+                <!-- Busca -->
+                <div>
+                  <label for="q" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-600">
+                    Buscar
+                  </label>
+                  <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 focus-within:border-sky-300 focus-within:ring-4 focus-within:ring-sky-100">
+                    <span class="text-slate-400" aria-hidden="true">🔎</span>
+                    <input
+                      id="q"
+                      name="q"
+                      type="text"
+                      value="{{ q_value }}"
+                      placeholder="Título ou autor..."
+                      class="w-full bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
+                    >
+                  </div>
+                </div>
+
+                <!-- Gênero -->
+                <div>
+                  <label for="genero" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-600">
+                    Gênero
+                  </label>
+                  <select
+                    id="genero"
+                    name="genero"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+                  >
+                    <option value="">Todos os gêneros</option>
+                    {% for g in lista_generos %}
+                      <option value="{{ g }}" {% if genero_value == g %}selected{% endif %}>{{ g|genero_label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Ano -->
+                <div>
+                  <label for="ano" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-600">
+                    Ano
+                  </label>
+                  <select
+                    id="ano"
+                    name="ano"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+                  >
+                    <option value="">Todos os anos</option>
+                    {% for a in lista_anos %}
+                      <option value="{{ a }}" {% if ano_value == a|string %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Editora -->
+                <div>
+                  <label for="editora" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-600">
+                    Editora
+                  </label>
+                  <select
+                    id="editora"
+                    name="editora"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+                  >
+                    <option value="">Todas as editoras</option>
+                    {% for e in lista_editoras %}
+                      <option value="{{ e }}" {% if editora_value == e %}selected{% endif %}>{{ e }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Tipo de capa -->
+                <div>
+                  <label for="tipo_capa" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-600">
+                    Tipo de capa
+                  </label>
+                  <select
+                    id="tipo_capa"
+                    name="tipo_capa"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+                  >
+                    <option value="">Todos os tipos</option>
+                    {% for tc in lista_tipos_capa %}
+                      <option value="{{ tc }}" {% if tipo_capa_value == tc %}selected{% endif %}>{{ tc }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Ordenação -->
+                <div>
+                  <label for="ordenar" class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-600">
+                    Ordenar por
+                  </label>
+                  <select
+                    id="ordenar"
+                    name="ordenar"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+                  >
+                    <option value="recentes" {% if ordenar_value == 'recentes' %}selected{% endif %}>Mais recentes</option>
+                    <option value="antigos" {% if ordenar_value == 'antigos' %}selected{% endif %}>Mais antigos</option>
+                    <option value="titulo_asc" {% if ordenar_value == 'titulo_asc' %}selected{% endif %}>Título A–Z</option>
+                    <option value="titulo_desc" {% if ordenar_value == 'titulo_desc' %}selected{% endif %}>Título Z–A</option>
+                    <option value="ano_desc" {% if ordenar_value == 'ano_desc' %}selected{% endif %}>Ano mais novo</option>
+                    <option value="ano_asc" {% if ordenar_value == 'ano_asc' %}selected{% endif %}>Ano mais antigo</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                  <button
+                    type="submit"
+                    class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 px-4 py-3 text-sm font-extrabold text-white shadow transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-sky-200"
+                  >
+                    Aplicar
+                  </button>
+
+                  <a
+                      href="{{ url_for('main.acervo') }}"
+                      class="acervo-clear-link inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Limpar
+                  </a>
+                </div>
+              </form>
+            </div>
+          </section>
+        </aside>
+
+        <!-- Conteúdo -->
+        <section id="acervo-results" class="min-w-0">
+
+          <!-- Chips ativos -->
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            {% if q_value %}
+              <span class="inline-flex items-center rounded-full border border-sky-200 bg-white/80 px-3 py-1 text-xs font-bold text-sky-700">
+                Busca: {{ q_value }}
+              </span>
+            {% endif %}
+            {% if genero_value %}
+              <span class="inline-flex items-center rounded-full border border-indigo-200 bg-white/80 px-3 py-1 text-xs font-bold text-indigo-700">
+                Gênero: {{ genero_value }}
+              </span>
+            {% endif %}
+            {% if ano_value %}
+              <span class="inline-flex items-center rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-xs font-bold text-violet-700">
+                Ano: {{ ano_value }}
+              </span>
+            {% endif %}
+            {% if editora_value %}
+              <span class="inline-flex items-center rounded-full border border-cyan-200 bg-white/80 px-3 py-1 text-xs font-bold text-cyan-700">
+                Editora: {{ editora_value }}
+              </span>
+            {% endif %}
+            {% if tipo_capa_value %}
+              <span class="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold text-slate-700">
+                {{ tipo_capa_value }}
+              </span>
+            {% endif %}
+          </div>
+
+          {% if livros and livros|length > 0 %}
+            <div class="mb-4 flex flex-col gap-3 rounded-3xl border border-white/60 bg-white/65 px-4 py-3 shadow-soft backdrop-blur md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 class="text-sm md:text-base font-black text-slate-900">Resultados encontrados</h3>
+                <p class="text-xs md:text-sm font-medium text-slate-500">
+                  Navegue pelos livros disponíveis no acervo.
+                </p>
+              </div>
+
+              <div class="text-xs md:text-sm font-semibold text-slate-600">
+                Página <span class="font-extrabold text-slate-900">{{ pag.page if pag else 1 }}</span>
+                {% if pag %}
+                  de <span class="font-extrabold text-slate-900">{{ pag.pages }}</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Grid -->
+            <div class="acervo-grid">
+              {% for livro in livros %}
+                {% set titulo = livro.titulo if livro.titulo is defined else (livro.nome if livro.nome is defined else ("Livro #" ~ livro.id)) %}
+                {% set capa = (livro.capa_arquivo if livro.capa_arquivo is defined else (livro.capa if livro.capa is defined else "")) %}
+
+                <a
+                  href="{{ url_for('main.livro_detalhe', livro_id=livro.id) }}"
+                  aria-label="Abrir {{ titulo }}"
+                  class="group block overflow-hidden rounded-3xl bg-gradient-to-br from-sky-200/60 via-white/35 to-indigo-200/60 p-[1px] shadow-soft transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div class="h-full overflow-hidden rounded-3xl border border-white/50 bg-white/85 backdrop-blur">
+                    <div class="acervo-cover bg-gradient-to-br from-sky-100 to-indigo-100">
+                      {% if capa %}
+                        <img
+                          src="{{ url_for('static', filename=capa) }}"
+                          alt="Capa de {{ titulo }}"
+                          class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                        />
+                      {% else %}
+                        <div class="flex h-full w-full items-center justify-center">
+                          <div class="text-5xl opacity-70" aria-hidden="true">📘</div>
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    <div class="p-4">
+                      <!-- topo -->
+                      <div class="mb-3 flex items-start justify-between gap-2">
+                        <div class="flex flex-wrap gap-1.5">
+                          {% if livro.genero is defined and livro.genero %}
+                            <span class="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700 ring-1 ring-inset ring-sky-200">
+                              {{ livro.genero_label or livro.genero }}
+                            </span>
+                          {% endif %}
+
+                          {% if livro.tipo_capa is defined and livro.tipo_capa %}
+                            <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600 ring-1 ring-inset ring-slate-200">
+                              {{ livro.tipo_capa }}
+                            </span>
+                          {% endif %}
+                        </div>
+
+                        {% if livro.ano is defined and livro.ano %}
+                          <span class="shrink-0 text-[11px] font-semibold text-slate-500">
+                            {{ livro.ano }}
+                          </span>
+                        {% endif %}
+                      </div>
+
+                      <!-- título -->
+                      <h3 class="acervo-title-clamp min-h-[2.9rem] text-[15px] font-black leading-snug tracking-tight text-slate-900">
+                        {{ titulo }}
+                      </h3>
+
+                      <!-- autor -->
+                      <p class="mt-1 text-sm font-semibold text-slate-600 line-clamp-1">
+                        {% if livro.autor is defined and livro.autor %}
+                          por {{ livro.autor }}
+                        {% else %}
+                          Autor não informado
+                        {% endif %}
+                      </p>
+
+                      <!-- editora -->
+                      <div class="mt-3 min-h-[1.25rem] text-[12px] font-medium text-slate-500 line-clamp-1">
+                        {% if livro.editora is defined and livro.editora %}
+                          {{ livro.editora }}
+                        {% else %}
+                          &nbsp;
+                        {% endif %}
+                      </div>
+
+                      <!-- rodapé -->
+                      <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                          Acervo
+                        </span>
+
+                        <span class="inline-flex items-center gap-1 text-xs font-extrabold text-sky-700 transition group-hover:translate-x-0.5">
+                          Ver detalhes
+                          <span aria-hidden="true">→</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <!-- Vazio -->
+            <div class="rounded-3xl bg-gradient-to-br from-sky-200/60 via-white/35 to-indigo-200/60 p-[1px] shadow-soft">
+              <div class="rounded-3xl border border-white/50 bg-white/80 p-10 text-center backdrop-blur">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-sky-100 bg-sky-50 text-3xl" aria-hidden="true">
+                  📚
+                </div>
+                <div class="text-xl font-black text-slate-900">Nenhum livro encontrado</div>
+                <div class="mt-2 text-sm font-medium text-slate-600">
+                  Tente ajustar os filtros ou pesquisar por outro termo.
+                </div>
+                <div class="mt-5">
+                  <a
+                    href="{{ url_for('main.acervo') }}"
+                    class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Limpar filtros
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Paginação -->
+          {% if pag and pag.pages > 1 %}
+            <div class="mt-7 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div class="text-sm text-slate-600 font-semibold">
+                Mostrando {{ start }}–{{ end }} de {{ total }} livros
+              </div>
+
+              <div class="inline-flex flex-wrap items-center gap-2" aria-label="Paginação">
+                {% if pag.has_prev %}
+                  <a class="pg-btn-tw" href="{{ url_for('main.acervo', page=pag.prev_num, **args_no_page) }}">←</a>
+                {% else %}
+                  <button class="pg-btn-tw opacity-50 cursor-not-allowed" type="button" disabled>←</button>
+                {% endif %}
+
+                {% if pages and pages[0] > 1 %}
+                  <a class="pg-num-tw" href="{{ url_for('main.acervo', page=1, **args_no_page) }}">1</a>
+                  {% if pages[0] > 2 %}<span class="px-1 text-slate-500 font-semibold">…</span>{% endif %}
+                {% endif %}
+
+                {% for p in pages %}
+                  {% if p == pag.page %}
+                    <button class="pg-num-tw is-active" type="button">{{ p }}</button>
+                  {% else %}
+                    <a class="pg-num-tw" href="{{ url_for('main.acervo', page=p, **args_no_page) }}">{{ p }}</a>
+                  {% endif %}
+                {% endfor %}
+
+                {% if pages and pages[-1] < pag.pages %}
+                  {% if pages[-1] < pag.pages - 1 %}<span class="px-1 text-slate-500 font-semibold">…</span>{% endif %}
+                  <a class="pg-num-tw" href="{{ url_for('main.acervo', page=pag.pages, **args_no_page) }}">{{ pag.pages }}</a>
+                {% endif %}
+
+                {% if pag.has_next %}
+                  <a class="pg-btn-tw" href="{{ url_for('main.acervo', page=pag.next_num, **args_no_page) }}">→</a>
+                {% else %}
+                  <button class="pg-btn-tw opacity-50 cursor-not-allowed" type="button" disabled>→</button>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+        </section>
+      </div>
+    </div>
+  </main>
+
+  {% include "_includes/footer.html" %}
+</body>
+<script>
+  (function () {
+    const form = document.getElementById("acervo-filtros-form");
+    const results = document.getElementById("acervo-results");
+    const counter = document.getElementById("acervo-counter");
+    const perPageInput = document.getElementById("per_page_input");
+
+    if (!form || !results) return;
+
+    let controller = null;
+    let typingTimer = null;
+
+    function getPerPageByScreen() {
+      const w = window.innerWidth;
+
+      if (w >= 1536) return 15;
+      if (w >= 1280) return 12;
+      if (w >= 1024) return 9;
+      if (w >= 640) return 8;
+      return 6;
+    }
+
+    function buildUrl(page = 1) {
+      const url = new URL(form.action, window.location.origin);
+      const data = new FormData(form);
+
+      data.set("page", page);
+      data.set("per_page", getPerPageByScreen());
+
+      for (const [key, value] of data.entries()) {
+        const cleanValue = String(value || "").trim();
+
+        if (cleanValue !== "") {
+          url.searchParams.set(key, cleanValue);
+        }
+      }
+
+      return url;
+    }
+
+    function syncFormFromUrl(url) {
+      const params = url.searchParams;
+
+      form.querySelectorAll("input[name], select[name]").forEach((field) => {
+        if (field.name === "per_page") {
+          field.value = getPerPageByScreen();
+          return;
+        }
+
+        if (field.name === "page") {
+          field.value = params.get("page") || "1";
+          return;
+        }
+
+        if (field.name === "ordenar") {
+          field.value = params.get("ordenar") || "recentes";
+          return;
+        }
+
+        field.value = params.get(field.name) || "";
+      });
+    }
+
+    async function loadAcervo(url, updateHistory = true) {
+      if (controller) {
+        controller.abort();
+      }
+
+      controller = new AbortController();
+
+      results.classList.add("opacity-50", "pointer-events-none");
+
+      try {
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            "X-Requested-With": "fetch"
+          },
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao carregar o acervo.");
+        }
+
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        const newResults = doc.querySelector("#acervo-results");
+        const newCounter = doc.querySelector("#acervo-counter");
+
+        if (!newResults) {
+          throw new Error("Área de resultados não encontrada no HTML retornado.");
+        }
+
+        results.innerHTML = newResults.innerHTML;
+
+        if (newCounter && counter) {
+          counter.innerHTML = newCounter.innerHTML;
+        }
+
+        if (updateHistory) {
+          window.history.pushState({}, "", url.toString());
+        }
+
+        syncFormFromUrl(url);
+
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error(error);
+
+          // fallback: se algo der errado, navega normalmente
+          window.location.href = url.toString();
+        }
+      } finally {
+        results.classList.remove("opacity-50", "pointer-events-none");
+      }
+    }
+
+    function resetFilters() {
+      const url = new URL(form.action, window.location.origin);
+
+      url.searchParams.set("page", "1");
+      url.searchParams.set("per_page", getPerPageByScreen());
+      url.searchParams.set("ordenar", "recentes");
+
+      syncFormFromUrl(url);
+      loadAcervo(url);
+    }
+
+    // Aplicar sem recarregar
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      loadAcervo(buildUrl(1));
+    });
+
+    // Selects aplicam automaticamente
+    form.querySelectorAll("select").forEach((select) => {
+      select.addEventListener("change", function () {
+        loadAcervo(buildUrl(1));
+      });
+    });
+
+    // Busca aplica automaticamente com pequeno atraso
+    const searchInput = form.querySelector("#q");
+
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        clearTimeout(typingTimer);
+
+        typingTimer = setTimeout(function () {
+          loadAcervo(buildUrl(1));
+        }, 450);
+      });
+    }
+
+    // Limpar filtros sem recarregar
+    document.addEventListener("click", function (event) {
+      const clearLink = event.target.closest(".acervo-clear-link");
+
+      if (!clearLink) return;
+
+      event.preventDefault();
+      resetFilters();
+    });
+
+    // Paginação sem recarregar
+    document.addEventListener("click", function (event) {
+      const pageLink = event.target.closest("#acervo-results a.pg-btn-tw, #acervo-results a.pg-num-tw");
+
+      if (!pageLink) return;
+
+      event.preventDefault();
+
+      const url = new URL(pageLink.href);
+      loadAcervo(url);
+    });
+
+    // Botão voltar/avançar do navegador
+    window.addEventListener("popstate", function () {
+      const url = new URL(window.location.href);
+      loadAcervo(url, false);
+    });
+
+    // Ajusta per_page sem recarregar a página inteira
+    const currentUrl = new URL(window.location.href);
+    const currentPerPage = parseInt(currentUrl.searchParams.get("per_page") || "0", 10);
+    const desiredPerPage = getPerPageByScreen();
+
+    if (perPageInput) {
+      perPageInput.value = desiredPerPage;
+    }
+
+    if (currentPerPage !== desiredPerPage) {
+      currentUrl.searchParams.set("per_page", desiredPerPage);
+      currentUrl.searchParams.set("page", "1");
+
+      window.history.replaceState({}, "", currentUrl.toString());
+      loadAcervo(currentUrl, false);
+    }
+  })();
+</script>
+</html>

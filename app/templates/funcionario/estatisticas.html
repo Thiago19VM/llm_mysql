@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Assistente RAG • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estatisticas.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/assistente_rag.css') }}">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
+    <div class="side-head">
+      <a class="brand" href="{{ url_for('funcionario.painel') }}">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}" class="brand__logo">
+        <span class="brand__name">LiteraWEB</span>
+      </a>
+
+      <button class="icon-btn side-close" type="button" aria-label="Fechar menu" onclick="toggleSidebar(false)">✕</button>
+    </div>
+
+    <nav class="side-nav" aria-label="Navegação do funcionário">
+      <a class="side-link {% if request.endpoint == 'funcionario.painel' %}is-active{% endif %}" href="{{ url_for('funcionario.painel') }}">
+        <span class="side-ico" aria-hidden="true">🏠</span><span>Painel de Controle</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.livros' %}is-active{% endif %}" href="{{ url_for('funcionario.livros') }}">
+        <span class="side-ico" aria-hidden="true">📚</span><span>Livros</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.reservas' %}is-active{% endif %}" href="{{ url_for('funcionario.reservas') }}">
+        <span class="side-ico" aria-hidden="true">🗓️</span><span>Reservas</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.usuarios' %}is-active{% endif %}" href="{{ url_for('funcionario.usuarios') }}">
+        <span class="side-ico" aria-hidden="true">👤</span><span>Usuários</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario_rag.painel_rag' %}is-active{% endif %}"
+           href="{{ url_for('funcionario_rag.painel_rag') }}">
+          <span class="side-ico" aria-hidden="true">🤖</span>
+          <span>Assistente Inteligente</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.politicas_emprestimo' %}is-active{% endif %}" href="{{ url_for('funcionario.politicas_emprestimo') }}">
+        <span class="side-ico" aria-hidden="true">🛡️</span><span>Políticas do Sistema</span>
+      </a>
+
+      <div class="side-sep"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-avatar" aria-hidden="true"></div>
+        <div class="side-user__meta">
+          <div class="side-user__name">{{ session.get("funcionario_nome", "Funcionário") }}</div>
+          <div class="side-user__role">Acesso interno</div>
+        </div>
+      </div>
+
+      <a class="side-logout" href="{{ url_for('auth.sair') }}"><span aria-hidden="true">↩</span> Sair</a>
+    </div>
+  </aside>
+
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" aria-label="Abrir menu" onclick="toggleSidebar(true)">☰</button>
+
+      <div class="welcome">
+        <div class="welcome__title">Assistente Inteligente RAG</div>
+        <div class="welcome__sub">Pergunte sobre dados, regras e funcionamento do LiteraWEB</div>
+          <div class="welcome__sub">
+              <span id="dataHoje"></span> • <span id="horaAgora"></span>
+          </div>
+      </div>
+
+      <div class="top-actions">
+        <a class="forum-btn" href="{{ url_for('forum.lista_topicos') }}">
+          <span class="forum-btn__ico" aria-hidden="true">💬</span><span>Ir para o Fórum</span>
+        </a>
+
+        <button class="user-pill" type="button" aria-label="Menu do usuário">
+          <span class="user-pill__avatar" aria-hidden="true"></span>
+          <span class="user-pill__name">{{ session.get("funcionario_nome", "Funcionário") }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Barra global de saúde do servidor RAG -->
+    <section class="rag-server-health" aria-label="Status do servidor RAG">
+      <div class="rag-server-health__left">
+        <span class="rag-server-health__dot" id="ragServerDot" aria-hidden="true"></span>
+        <strong>Servidor RAG</strong>
+        <span id="ragServerStatus">Verificando...</span>
+      </div>
+
+      <div class="rag-server-health__metrics">
+        <span><strong>GPU:</strong> <span id="ragGpuUso">—</span></span>
+        <span><strong>VRAM:</strong> <span id="ragGpuMemoria">—</span></span>
+        <span><strong>Temp GPU:</strong> <span id="ragGpuTemp">—</span></span>
+        <span><strong>CPU:</strong> <span id="ragCpuUso">—</span></span>
+        <span><strong>Temp CPU:</strong> <span id="ragCpuTemp">—</span></span>
+        <span><strong>RAM:</strong> <span id="ragRamUso">—</span></span>
+      </div>
+    </section>
+
+    <main class="content">
+      <div class="content-inner rag-layout">
+        <section class="rag-chat-card" aria-label="Chat do assistente RAG">
+          <div class="rag-chat-head">
+            <div>
+              <h1>Chat com o Assistente</h1>
+              <p>Faça perguntas como “quantos livros ativos existem?” ou “como funciona o aluguel de livros?”.</p>
+            </div>
+            <span class="rag-status" id="ragStatus">Pronto</span>
+          </div>
+
+          <div class="rag-chat-messages" id="ragChatMessages">
+            <div class="rag-msg rag-msg--assistant">
+              <div class="rag-msg__avatar">🤖</div>
+              <div class="rag-msg__bubble">
+                Olá! Posso explicar regras do sistema LiteraWEB ou gerar análises com gráficos usando os dados do acervo, reservas, usuários e fórum.
+              </div>
+            </div>
+          </div>
+
+          <!-- Estatísticas da última resposta da LLM -->
+          <div class="rag-llm-metrics" id="ragLlmMetrics">
+            <span><strong>Status:</strong> <span id="ragMetricaStatus">Aguardando</span></span>
+            <span><strong>Tempo:</strong> <span id="ragTempoResposta">0 ms</span></span>
+            <span><strong>Tokens:</strong> <span id="ragTokens">—</span></span>
+          </div>
+
+          <form class="rag-chat-form" id="ragChatForm">
+            <textarea id="ragPergunta" rows="3" placeholder="Ex: Mostre os livros mais emprestados em gráfico de barras" required></textarea>
+            <button type="submit" id="ragEnviar">Enviar</button>
+          </form>
+        </section>
+
+        <aside class="rag-result-card" aria-label="Resultado gráfico do assistente RAG">
+          <div class="rag-result-head">
+            <div>
+              <h2>Visualização solicitada</h2>
+              <p>Quando a pergunta gerar dados, o gráfico e a tabela aparecem aqui.</p>
+            </div>
+          </div>
+
+          <div class="rag-empty" id="ragEmptyState">
+            <div class="rag-empty__icon">📊</div>
+            <strong>Nenhum gráfico ainda</strong>
+            <span>Peça algo como “empréstimos por mês” ou “top 10 livros mais emprestados”.</span>
+          </div>
+
+          <div class="rag-chart-wrap" id="ragChartWrap" hidden>
+            <canvas id="ragChart"></canvas>
+          </div>
+
+          <div class="rag-table-wrap" id="ragTableWrap" hidden>
+            <table id="ragTabela"></table>
+          </div>
+
+              <div class="rag-sql-box" id="ragSqlBox" hidden>
+                  <button type="button" class="rag-sql-trigger" id="ragSqlTrigger">
+                    SQL gerado
+                  </button>
+              </div>
+
+            <div class="rag-sql-floating" id="ragSqlFloating" hidden>
+              <div class="rag-sql-floating__head" id="ragSqlFloatingHead">
+                <strong>SQL gerado</strong>
+                <button type="button" id="ragSqlClose" aria-label="Fechar SQL">×</button>
+              </div>
+
+              <pre id="ragSql"></pre>
+           </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+
+  <script src="{{ url_for('static', filename='js/assistente_rag.js') }}"></script>
+
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const backdrop = document.getElementById("backdrop");
+
+    function toggleSidebar(open) {
+      document.body.classList.toggle("side-open", !!open);
+      if (backdrop) backdrop.style.display = open ? "block" : "none";
+    }
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 980) {
+        if (backdrop) backdrop.style.display = "none";
+        document.body.classList.remove("side-open");
+      }
+    });
+  </script>
+
+<script>
+  function atualizarDataHora() {
+    const agora = new Date();
+
+    const dataFormatada = agora.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+
+    const horaFormatada = agora.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    document.getElementById("dataHoje").textContent = dataFormatada;
+    document.getElementById("horaAgora").textContent = horaFormatada;
+  }
+
+  atualizarDataHora();
+  setInterval(atualizarDataHora, 1000);
+</script>
+</body>
+</html>

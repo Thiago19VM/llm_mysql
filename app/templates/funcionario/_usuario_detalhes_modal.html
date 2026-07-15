@@ -1,0 +1,48 @@
+<!-- templates/funcionario/_usuario_detalhes_modal.html -->
+
+<!-- MODAL: Detalhes do Usuário -->
+<div class="ud-backdrop" id="udBackdrop" aria-hidden="true"></div>
+
+<div class="ud-modal" id="udModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="udTitle">
+  <div class="ud-card">
+    <header class="ud-head">
+      <div class="ud-profile">
+        <div class="ud-avatar" id="udAvatar" aria-hidden="true"></div>
+
+        <div class="ud-meta">
+          <h2 id="udTitle" class="ud-name">Usuário</h2>
+          <div class="ud-sub" id="udSub"></div>
+        </div>
+      </div>
+
+      <button type="button" class="icon-btn ud-close" id="udClose" aria-label="Fechar">✕</button>
+    </header>
+
+    <nav class="ud-tabs" role="tablist" aria-label="Seções do usuário">
+      <button type="button" class="ud-tab is-active" data-tab="endereco" role="tab" aria-selected="true">Endereço do usuário</button>
+      <button type="button" class="ud-tab" data-tab="livros" role="tab" aria-selected="false">Histórico de livros</button>
+      <button type="button" class="ud-tab" data-tab="forum" role="tab" aria-selected="false">Fórum</button>
+    </nav>
+
+    <section class="ud-body">
+      <div class="ud-panel is-active" data-panel="endereco" role="tabpanel">
+        <div class="ud-panel-inner" id="udEndereco"></div>
+      </div>
+
+      <div class="ud-panel" data-panel="livros" role="tabpanel">
+        <div class="ud-panel-inner" id="udLivros"></div>
+      </div>
+
+      <div class="ud-panel" data-panel="forum" role="tabpanel">
+        <div class="ud-panel-inner" id="udForum"></div>
+      </div>
+    </section>
+
+    <footer class="ud-foot">
+      <div class="ud-foot-left" id="udFootInfo"></div>
+      <div class="ud-foot-right">
+        <button type="button" class="btn btn-secondary" id="udFecharBtn">Fechar</button>
+      </div>
+    </footer>
+  </div>
+</div>

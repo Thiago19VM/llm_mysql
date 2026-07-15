@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}{{ perfil.nome_usuario }} • Fórum • LiteraWEB{% endblock %}
+
+{% block content %}
+{% from "_macros/avatar.html" import avatar_usuario %}
+
+<div class="max-w-6xl mx-auto">
+  <div class="grid gap-5 lg:grid-cols-12">
+
+    <!-- COLUNA PRINCIPAL -->
+    <div class="lg:col-span-8 space-y-5">
+
+      <!-- Header do perfil -->
+      <section class="rounded-3xl border border-slate-200 bg-white/90 shadow-soft overflow-hidden">
+        <div class="p-5 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+            {{ avatar_usuario(perfil, size="h-16 w-16", rounded="rounded-2xl") }}
+
+            <div class="min-w-0 flex-1">
+              <div class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Perfil no fórum</div>
+              <h1 class="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">
+                {{ perfil.nome_usuario }}
+              </h1>
+
+              {% if perfil.bio %}
+                <p class="mt-2 text-sm font-semibold text-slate-600">
+                  {{ perfil.bio }}
+                </p>
+              {% else %}
+                <p class="mt-2 text-sm font-semibold text-slate-500 italic">
+                  Sem bio ainda.
+                </p>
+              {% endif %}
+
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-extrabold text-slate-700">
+                  👥
+                  <span class="text-slate-900">
+                    {% if seguidores_count is not none %}{{ seguidores_count }}{% else %}Privado{% endif %}
+                  </span>
+                  seguidores
+                </span>
+
+                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-extrabold text-slate-700">
+                  ➕
+                  <span class="text-slate-900">
+                    {% if seguindo_count is not none %}{{ seguindo_count }}{% else %}Privado{% endif %}
+                  </span>
+                  seguindo
+                </span>
+
+                {% if perfil.forum_privacidade == 'seguidores' %}
+                  <span class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-extrabold text-amber-700">
+                    🔒 Apenas seguidores
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700">
+                    🌐 Público
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="shrink-0 space-y-2">
+              {% if usuario_logado and (not is_self) %}
+                {% if is_following %}
+                  <form method="post" action="{{ url_for('forum.deixar_seguir_usuario', nome_usuario=perfil.nome_usuario) }}">
+                    <button class="w-full inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+                      ✓ Seguindo
+                    </button>
+                  </form>
+
+                {% elif follow_pending %}
+                  <form method="post" action="{{ url_for('forum.deixar_seguir_usuario', nome_usuario=perfil.nome_usuario) }}">
+                    <button class="w-full inline-flex items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-extrabold text-amber-700 hover:bg-amber-100">
+                      ⏳ Solicitação enviada
+                    </button>
+                  </form>
+
+                {% else %}
+                  <form method="post" action="{{ url_for('forum.seguir_usuario', nome_usuario=perfil.nome_usuario) }}">
+                    <button class="w-full inline-flex items-center justify-center rounded-2xl bg-sky-700 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-sky-800">
+                      ➕ Seguir
+                    </button>
+                  </form>
+                {% endif %}
+              {% endif %}
+
+              {% if is_self %}
+                <form method="post"
+                      action="{{ url_for('forum.alterar_privacidade_forum', nome_usuario=perfil.nome_usuario) }}"
+                      class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                  <div class="text-xs font-extrabold text-slate-600 uppercase tracking-wider">Privacidade</div>
+
+                  <select name="forum_privacidade"
+                          class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
+                    <option value="todos" {% if perfil.forum_privacidade == 'todos' %}selected{% endif %}>Todos</option>
+                    <option value="seguidores" {% if perfil.forum_privacidade == 'seguidores' %}selected{% endif %}>Apenas seguidores</option>
+                  </select>
+
+                  <button class="mt-2 w-full inline-flex items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-xs font-extrabold text-white hover:bg-slate-800">
+                    Salvar
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if not pode_ver %}
+            <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <div class="text-sm font-extrabold text-amber-900">🔒 Perfil privado</div>
+
+              <div class="mt-1 text-sm font-semibold text-amber-800">
+                Apenas seguidores aceitos podem ver tópicos, comentários e listas de seguidores.
+              </div>
+
+              {% if usuario_logado and (not is_self) %}
+                {% if follow_pending %}
+                  <div class="mt-3 text-sm font-semibold text-amber-800">
+                    Sua solicitação foi enviada e está aguardando aprovação.
+                  </div>
+                {% elif not is_following %}
+                  <div class="mt-3 text-sm font-semibold text-amber-800">
+                    Siga este usuário para solicitar acesso ao conteúdo.
+                  </div>
+                {% endif %}
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Abas -->
+      <section class="rounded-3xl border border-slate-200 bg-white/90 shadow-soft p-4 sm:p-5">
+        {% set tabs = [
+          ('topicos','Tópicos','🧾'),
+          ('comentarios','Comentários','💬'),
+          ('seguidores','Seguidores','👥'),
+          ('seguindo','Seguindo','➕')
+        ] %}
+
+        <div class="flex flex-wrap gap-2">
+          {% for k, label, ico in tabs %}
+            <button
+              type="button"
+              data-tab-btn="{{ k }}"
+              class="tab-btn inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-extrabold transition-colors {% if tab == k %}bg-slate-900 text-white border-slate-900{% else %}bg-white text-slate-700 border-slate-200{% endif %}">
+              <span>{{ ico }}</span> {{ label }}
+            </button>
+          {% endfor %}
+        </div>
+
+        <!-- Conteúdo da aba -->
+        <div class="mt-4">
+          {% if not pode_ver %}
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
+              Conteúdo privado.
+            </div>
+          {% else %}
+
+            <!-- TOPICOS -->
+            <div data-tab-panel="topicos" {% if tab != 'topicos' %}hidden{% endif %}>
+              {% if meus_topicos %}
+                <div class="space-y-3">
+                  {% for t in meus_topicos %}
+                    {% set atividade = (t.ultimo_comentario_em or t.criado_em) %}
+                    <a href="{{ url_for('forum.topico_detalhe', topico_id=t.id, slug=t.url_slug) }}"
+                       class="block rounded-2xl border border-slate-200 bg-white p-4 hover:bg-slate-50 transition">
+                      <div class="text-sm font-extrabold text-slate-900">{{ t.titulo }}</div>
+
+                      <div class="mt-2 text-xs font-semibold text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+                        <span>🕒 {{ t.criado_em|dtbr if t.criado_em else '-' }}</span>
+                        <span>💬 {{ t.comentarios_count or 0 }}</span>
+                        <span>👁️ {{ t.visualizacoes or 0 }}</span>
+                        <span class="text-slate-400">⏱️ {{ atividade|dtbr if atividade else '-' }}</span>
+                      </div>
+
+                      {% if t.conteudo %}
+                        <div class="mt-2 text-sm font-semibold text-slate-600">
+                          {{ _resumo_texto(t.conteudo, 220) }}
+                        </div>
+                      {% endif %}
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
+                  Nenhum tópico ainda.
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- COMENTARIOS -->
+            <div data-tab-panel="comentarios" {% if tab != 'comentarios' %}hidden{% endif %}>
+              {% if meus_comentarios %}
+                <div class="space-y-3">
+                  {% for c, t in meus_comentarios %}
+                    <a href="{{ url_for('forum.topico_detalhe', topico_id=t.id, slug=t.url_slug) }}#comentario-{{ c.id }}"
+                       class="block rounded-2xl border border-slate-200 bg-white p-4 hover:bg-slate-50 transition">
+                      <div class="text-xs font-extrabold text-slate-500">
+                        em: <span class="text-slate-900">{{ t.titulo }}</span>
+                      </div>
+                      <div class="mt-1 text-xs font-semibold text-slate-500">
+                        🕒 {{ c.criado_em|dtbr if c.criado_em else '-' }}
+                      </div>
+                      <div class="mt-2 text-sm font-semibold text-slate-700">
+                        {% if c.oculto %}
+                          <span class="italic text-slate-500">Comentário removido.</span>
+                        {% else %}
+                          {{ _resumo_texto(c.conteudo, 240) }}
+                        {% endif %}
+                      </div>
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
+                  Nenhum comentário ainda.
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- SEGUIDORES -->
+            <div data-tab-panel="seguidores" {% if tab != 'seguidores' %}hidden{% endif %}>
+              {% if seguidores_list %}
+                <div class="flex flex-wrap gap-2">
+                  {% for u in seguidores_list %}
+                    <a href="{{ url_for('forum.perfil_usuario', nome_usuario=u.nome_usuario) }}"
+                       class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 hover:bg-slate-50">
+                      {{ avatar_usuario(u, size="h-7 w-7", rounded="rounded-full") }}
+                      <span class="text-xs font-extrabold text-slate-700">{{ u.nome_usuario }}</span>
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
+                  Sem seguidores por enquanto.
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- SEGUINDO -->
+            <div data-tab-panel="seguindo" {% if tab != 'seguindo' %}hidden{% endif %}>
+              {% if seguindo_list %}
+                <div class="flex flex-wrap gap-2">
+                  {% for u in seguindo_list %}
+                    <a href="{{ url_for('forum.perfil_usuario', nome_usuario=u.nome_usuario) }}"
+                       class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 hover:bg-slate-50">
+                      {{ avatar_usuario(u, size="h-7 w-7", rounded="rounded-full") }}
+                      <span class="text-xs font-extrabold text-slate-700">{{ u.nome_usuario }}</span>
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
+                  Não segue ninguém ainda.
+                </div>
+              {% endif %}
+            </div>
+
+          {% endif %}
+        </div>
+      </section>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="lg:col-span-4">
+      {% include "forum/_sidebar_forum.html" %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const buttons = document.querySelectorAll("[data-tab-btn]");
+  const panels = document.querySelectorAll("[data-tab-panel]");
+
+  function setButtonState(button, active) {
+    button.classList.toggle("bg-slate-900", active);
+    button.classList.toggle("text-white", active);
+    button.classList.toggle("border-slate-900", active);
+
+    button.classList.toggle("bg-white", !active);
+    button.classList.toggle("text-slate-700", !active);
+    button.classList.toggle("border-slate-200", !active);
+
+    // importante:
+    button.classList.toggle("hover:bg-slate-50", !active);
+    button.classList.toggle("hover:text-slate-900", !active);
+
+    // garante que a ativa não “apague” no hover
+    button.classList.toggle("hover:bg-slate-900", active);
+    button.classList.toggle("hover:text-white", active);
+  }
+
+  function activateTab(tabName, updateUrl = true) {
+    panels.forEach((panel) => {
+      panel.hidden = panel.dataset.tabPanel !== tabName;
+    });
+
+    buttons.forEach((button) => {
+      setButtonState(button, button.dataset.tabBtn === tabName);
+    });
+
+    if (updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tabName);
+      window.history.replaceState({}, "", url);
+    }
+  }
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activateTab(button.dataset.tabBtn);
+    });
+  });
+
+  const urlTab = new URL(window.location.href).searchParams.get("tab");
+  const initialTab = urlTab || "{{ tab or 'topicos' }}";
+  activateTab(initialTab, false);
+});
+</script>
+{% endblock %}

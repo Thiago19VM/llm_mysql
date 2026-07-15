@@ -1,0 +1,338 @@
+<!-- app/templates/perfil.html -->
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meu Perfil • LiteraWEB</title>
+    {% include "_includes/head_favicon.html" %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: "0 18px 45px rgba(10,15,25,.10)",
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="relative min-h-screen text-slate-900 overflow-x-hidden flex flex-col">
+  <!-- Color blobs (fundo) -->
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute -top-28 -left-28 h-96 w-96 rounded-full bg-sky-400/25 blur-3xl"></div>
+    <div class="absolute -top-24 -right-32 h-[28rem] w-[28rem] rounded-full bg-cyan-400/20 blur-3xl"></div>
+    <div class="absolute top-[45%] -left-24 h-80 w-80 rounded-full bg-indigo-400/14 blur-3xl"></div>
+    <div class="absolute bottom-[-6rem] right-[10%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-400/12 blur-3xl"></div>
+  </div>
+
+  <!-- NAVBAR -->
+  {% include "_includes/navbar.html" %}
+
+  <!-- CONTEÚDO -->
+  <main class="container py-10 flex-1">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        <div class="mb-6 space-y-3">
+          {% for cat, msg in msgs %}
+            <div class="rounded-2xl border p-4 backdrop-blur
+              {% if cat == 'success' %} border-emerald-500/20 bg-emerald-500/10 text-emerald-900
+              {% elif cat == 'error' %} border-rose-500/20 bg-rose-500/10 text-rose-900
+              {% else %} border-slate-900/10 bg-white/70 text-slate-800 {% endif %}">
+              <div class="font-semibold">{{ msg }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- topo -->
+    <div class="mb-7 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div>
+        <h1 class="text-2xl font-extrabold tracking-tight md:text-3xl">Meu perfil</h1>
+
+        {% if not completo %}
+          <p class="text-slate-600">Complete suas informações para liberar as reservas de livros.</p>
+        {% endif %}
+      </div>
+
+      <!-- status -->
+      <div class="flex items-center gap-3">
+        {% if not completo %}
+          <div class="h-2 w-40 overflow-hidden rounded-full bg-white/70 ring-1 ring-slate-900/10 backdrop-blur">
+            <div class="h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500" style="width: {{ percent }}%"></div>
+          </div>
+        {% endif %}
+
+        {% if completo %}
+          <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-500/20">
+            Reservas liberadas
+          </span>
+        {% else %}
+          <span class="rounded-full bg-amber-500/10 px-3 py-1 text-sm font-semibold text-amber-800 ring-1 ring-amber-500/20">
+            Falta completar
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if not completo %}
+      <div class="mb-6 rounded-2xl border border-amber-500/20 bg-white/70 p-4 backdrop-blur">
+        <p class="font-semibold text-amber-900">Para reservar, complete:</p>
+        <p class="mt-1 text-sm text-amber-900/80">
+          {{ faltando|join(", ") }}
+        </p>
+      </div>
+    {% endif %}
+
+    <!-- form principal -->
+    <form method="POST" enctype="multipart/form-data" class="grid gap-6 lg:grid-cols-3">
+      <!-- coluna esquerda -->
+      <div class="lg:col-span-1">
+        <div class="rounded-3xl bg-gradient-to-r from-sky-500/50 to-cyan-400/50 p-[1px] shadow-[0_20px_60px_rgba(2,132,199,0.12)]">
+          <div class="rounded-3xl bg-white/70 p-5 backdrop-blur md:p-6">
+            <div class="flex items-center gap-4">
+              <div class="relative">
+                {% if foto_url %}
+                  <img id="avatarPreview" src="{{ foto_url }}"
+                       class="h-16 w-16 rounded-full object-cover ring-1 ring-slate-900/10"
+                       alt="Foto de perfil">
+                {% else %}
+                  <div id="avatarFallback"
+                       class="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-400/20 font-extrabold text-slate-700 ring-1 ring-slate-900/10">
+                    {{ (session.get('nome_usuario','U')[:1] | upper) }}
+                  </div>
+                  <img id="avatarPreview"
+                       class="hidden h-16 w-16 rounded-full object-cover ring-1 ring-slate-900/10"
+                       alt="Foto de perfil">
+                {% endif %}
+
+                <span class="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-white/80 text-[11px] ring-1 ring-slate-900/10">
+                  📷
+                </span>
+              </div>
+
+              <div class="min-w-0 leading-tight">
+                <p class="truncate text-[15px] font-extrabold text-slate-800">
+                  {{ session.get("nome_usuario", "") }}
+                </p>
+                <p class="truncate text-sm text-slate-600">{{ usuario.email }}</p>
+              </div>
+            </div>
+
+            <div class="mt-5 space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-800">Trocar foto</label>
+                <input
+                  id="fotoInput"
+                  name="foto"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  class="mt-2 block w-full cursor-pointer rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900/5 file:px-3 file:py-2 file:text-sm file:font-semibold hover:bg-white"
+                />
+                <p class="mt-2 text-xs text-slate-500">PNG/JPG/WEBP • até 4MB.</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-slate-800">
+                  Telefone <span class="text-rose-600">*</span>
+                </label>
+                <input
+                  id="telefone"
+                  name="telefone"
+                  value="{{ usuario.telefone or '' }}"
+                  inputmode="numeric"
+                  maxlength="15"
+                  class="mt-2 w-full rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="(11) 90000-0000"
+                >
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-slate-800">Bio</label>
+                <textarea
+                  name="bio"
+                  rows="4"
+                  class="mt-2 w-full min-h-[110px] resize-none rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="Escreva algo curto sobre você..."
+                >{{ usuario.bio or '' }}</textarea>
+                <p class="mt-2 text-xs text-slate-500">Até 280 caracteres.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- coluna direita -->
+      <div class="lg:col-span-2">
+        <div class="rounded-3xl bg-gradient-to-r from-indigo-500/35 to-sky-500/35 p-[1px] shadow-[0_20px_60px_rgba(99,102,241,0.10)]">
+          <div class="rounded-3xl bg-white/70 p-5 backdrop-blur md:p-6">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-lg font-extrabold">Endereço para reservas</h2>
+              <span class="text-xs font-semibold text-slate-600">
+                <span class="text-rose-600">*</span> obrigatório para reservar
+              </span>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-3">
+              <div class="md:col-span-1">
+                <label class="block text-sm font-semibold text-slate-800">
+                  CEP <span class="text-rose-600">*</span>
+                </label>
+                <input
+                  id="cep"
+                  name="cep"
+                  value="{{ usuario.cep or '' }}"
+                  inputmode="numeric"
+                  maxlength="9"
+                  class="mt-2 w-full rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="00000-000"
+                >
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-slate-800">
+                  Rua <span class="text-rose-600">*</span>
+                </label>
+                <input name="rua" value="{{ usuario.rua or '' }}"
+                  class="mt-2 w-full rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="Av., Rua...">
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-slate-800">
+                  Número <span class="text-rose-600">*</span>
+                </label>
+                <input name="numero" value="{{ usuario.numero or '' }}"
+                  class="mt-2 w-full rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="123">
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-slate-800">
+                  Bairro <span class="text-rose-600">*</span>
+                </label>
+                <input name="bairro" value="{{ usuario.bairro or '' }}"
+                  class="mt-2 w-full rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="Seu bairro">
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-slate-800">
+                  Cidade <span class="text-rose-600">*</span>
+                </label>
+                <input name="cidade" value="{{ usuario.cidade or '' }}"
+                  class="mt-2 w-full rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="Sua cidade">
+              </div>
+
+              <div class="md:col-span-1">
+                <label class="block text-sm font-semibold text-slate-800">
+                  UF <span class="text-rose-600">*</span>
+                </label>
+                <input name="uf" value="{{ usuario.uf or '' }}" maxlength="2"
+                  class="mt-2 w-full uppercase rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="SP">
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="block text-sm font-semibold text-slate-800">Complemento</label>
+                <input name="complemento" value="{{ usuario.complemento or '' }}"
+                  class="mt-2 w-full rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 outline-none focus:border-sky-500/50 focus:bg-white"
+                  placeholder="Apto, bloco, referência...">
+              </div>
+            </div>
+
+            <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              {% if not completo %}
+                <p class="text-sm text-slate-600">
+                  Após salvar, o sistema libera o botão <span class="font-semibold">Reservar</span> no Acervo quando tudo estiver completo.
+                </p>
+              {% endif %}
+
+              <button type="submit"
+                class="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-500 px-5 py-3 text-sm font-extrabold text-white shadow-[0_18px_50px_rgba(2,132,199,0.18)] hover:brightness-105 active:brightness-95">
+                Salvar alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <!-- FOOTER -->
+  {% include "_includes/footer.html" %}
+
+  <script>
+  // ===== Preview da foto =====
+  const input = document.getElementById("fotoInput");
+  const preview = document.getElementById("avatarPreview");
+  const fallback = document.getElementById("avatarFallback");
+
+  if (input && preview) {
+    input.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.classList.remove("hidden");
+      if (fallback) fallback.classList.add("hidden");
+    });
+  }
+
+  // ===== Máscaras =====
+  function onlyDigits(value) {
+    return (value || "").replace(/\D/g, "");
+  }
+
+  function maskCEP(value) {
+    value = onlyDigits(value).slice(0, 8);
+    if (value.length > 5) {
+      return value.slice(0, 5) + "-" + value.slice(5);
+    }
+    return value;
+  }
+
+  function maskTelefone(value) {
+    value = onlyDigits(value).slice(0, 11);
+
+    if (value.length <= 2) {
+      return value ? "(" + value : "";
+    }
+
+    if (value.length <= 7) {
+      return "(" + value.slice(0, 2) + ") " + value.slice(2);
+    }
+
+    if (value.length <= 10) {
+      return "(" + value.slice(0, 2) + ") " + value.slice(2, 6) + "-" + value.slice(6);
+    }
+
+    return "(" + value.slice(0, 2) + ") " + value.slice(2, 7) + "-" + value.slice(7);
+  }
+
+  const telefoneInput = document.getElementById("telefone");
+  const cepInput = document.getElementById("cep");
+
+  if (telefoneInput) {
+    telefoneInput.value = maskTelefone(telefoneInput.value);
+    telefoneInput.addEventListener("input", function () {
+      this.value = maskTelefone(this.value);
+    });
+  }
+
+  if (cepInput) {
+    cepInput.value = maskCEP(cepInput.value);
+    cepInput.addEventListener("input", function () {
+      this.value = maskCEP(this.value);
+    });
+  }
+</script>
+</body>
+</html>

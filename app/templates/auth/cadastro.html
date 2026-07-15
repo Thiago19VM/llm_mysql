@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Criar conta • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
+
+  <!-- reCAPTCHA v2 -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+
+<body>
+  <main class="auth auth-register-pro">
+    <section class="card register-pro-card" aria-label="Cadastro">
+
+      <div class="register-hero">
+        <div class="register-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <path d="M12 12a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M5 19.2c.8-2.8 3.5-4.7 7-4.7s6.2 1.9 7 4.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M18 7.5h4m-2-2v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="register-badge">Novo cadastro</div>
+
+        <h1 class="title register-title">Crie sua conta</h1>
+
+        <p class="register-subtitle">
+          Junte-se ao LiteraWEB para explorar o acervo, interagir no fórum e acompanhar sua experiência de leitura de forma completa.
+        </p>
+
+        <div class="register-tags" aria-label="Vantagens do cadastro">
+          <span class="register-tag">Cadastro rápido</span>
+          <span class="register-tag">Conta protegida</span>
+          <span class="register-tag">Acesso completo</span>
+        </div>
+      </div>
+
+      <a class="btn btn-google register-google" href="{{ url_for('auth.login_google') }}">
+        <span class="g-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
+            <path fill="#EA4335" d="M24 9.5c3.2 0 6.1 1.1 8.4 3.3l6-6C34.8 3.3 29.8 1 24 1 14.6 1 6.5 6.4 2.7 14.2l7.2 5.6C11.7 13.7 17.4 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-2.8-.4-4.1H24v7.8h12.5c-.3 2-1.8 5-5.1 7.1l7 5.4c4.1-3.8 6.7-9.4 6.7-16.2z"/>
+            <path fill="#FBBC05" d="M9.9 28.3c-.5-1.5-.8-3.2-.8-4.9s.3-3.4.8-4.9l-7.2-5.6C1.6 15.8 1 19.8 1 23.4s.6 7.6 1.7 10.5l7.2-5.6z"/>
+            <path fill="#34A853" d="M24 46.9c5.8 0 10.7-1.9 14.3-5.2l-7-5.4c-1.9 1.3-4.4 2.2-7.3 2.2-6.6 0-12.3-4.2-14.1-10.1l-7.2 5.6C6.5 41.6 14.6 46.9 24 46.9z"/>
+          </svg>
+        </span>
+        <span>Continuar com Google</span>
+      </a>
+
+      <div class="divider register-divider" role="separator" aria-label="ou">
+        <span>OU</span>
+      </div>
+
+      <p class="register-hint">Crie sua conta com seu endereço de e-mail</p>
+
+      {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category|lower }}" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form class="form register-form" method="post" action="{{ url_for('auth.cadastro_post') }}" id="cadastroForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+        <div class="field">
+          <label for="nome">Nome de usuário</label>
+          <input
+            id="nome"
+            name="nome"
+            type="text"
+            placeholder="Escolha seu nome de usuário"
+            autocomplete="username"
+            required
+            value="{{ nome|default('') }}"
+          >
+          <small class="field-help">
+            Esse nome será usado para identificar você no sistema.
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="seuemail@exemplo.com"
+            autocomplete="email"
+            required
+            value="{{ email|default('') }}"
+          >
+        </div>
+
+        <div class="field">
+          <label for="senha">Senha</label>
+
+          <div class="password password-pro">
+            <input
+              id="senha"
+              name="senha"
+              type="password"
+              placeholder="Crie uma senha forte"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            >
+
+            <button class="pw-toggle pw-toggle-pro" type="button" id="toggleSenha" aria-label="Mostrar ou ocultar senha">
+              <svg id="eyeIcon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path id="eyePath"></path>
+              </svg>
+            </button>
+          </div>
+
+          <small class="field-help">
+            Use 8 ou mais caracteres com letras, números e símbolos.
+          </small>
+
+          <div class="password-meter" aria-hidden="true">
+            <span class="meter-bar" id="meterBar"></span>
+          </div>
+          <small class="password-strength" id="passwordStrength">Força da senha: —</small>
+        </div>
+
+        <div class="field">
+          <label>Qual o seu gênero?</label>
+          <div class="radios-pro">
+            <label class="radio-card">
+              <input type="radio" name="genero" value="F" {% if genero == 'F' %}checked{% endif %} required>
+              <span>Feminino</span>
+            </label>
+
+            <label class="radio-card">
+              <input type="radio" name="genero" value="M" {% if genero == 'M' %}checked{% endif %} required>
+              <span>Masculino</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Qual sua data de nascimento?</label>
+
+          <div class="dob-pro">
+            <div class="dob-item-pro">
+              <span class="dob-label">Mês</span>
+              <select name="mes" required>
+                <option value="" disabled {% if not mes %}selected{% endif %}></option>
+                <option value="1"  {% if mes == '1' %}selected{% endif %}>Janeiro</option>
+                <option value="2"  {% if mes == '2' %}selected{% endif %}>Fevereiro</option>
+                <option value="3"  {% if mes == '3' %}selected{% endif %}>Março</option>
+                <option value="4"  {% if mes == '4' %}selected{% endif %}>Abril</option>
+                <option value="5"  {% if mes == '5' %}selected{% endif %}>Maio</option>
+                <option value="6"  {% if mes == '6' %}selected{% endif %}>Junho</option>
+                <option value="7"  {% if mes == '7' %}selected{% endif %}>Julho</option>
+                <option value="8"  {% if mes == '8' %}selected{% endif %}>Agosto</option>
+                <option value="9"  {% if mes == '9' %}selected{% endif %}>Setembro</option>
+                <option value="10" {% if mes == '10' %}selected{% endif %}>Outubro</option>
+                <option value="11" {% if mes == '11' %}selected{% endif %}>Novembro</option>
+                <option value="12" {% if mes == '12' %}selected{% endif %}>Dezembro</option>
+              </select>
+            </div>
+
+            <div class="dob-item-pro">
+              <span class="dob-label">Dia</span>
+              <select name="dia" required>
+                <option value="" disabled {% if not dia %}selected{% endif %}></option>
+                {% for d in range(1, 32) %}
+                  <option value="{{ d }}" {% if dia == d|string %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="dob-item-pro">
+              <span class="dob-label">Ano</span>
+              <select name="ano" required>
+                <option value="" disabled {% if not ano %}selected{% endif %}></option>
+                {% for a in range(2026, 1900, -1) %}
+                  <option value="{{ a }}" {% if ano == a|string %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="captcha-wrap-pro">
+          <div class="captcha-title">Verificação de segurança</div>
+          <div class="captcha-box">
+            <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-submit register-submit" id="btnCadastro" type="submit" disabled>
+          <span class="btn-text">Criar conta</span>
+          <span class="btn-loader" aria-hidden="true"></span>
+        </button>
+
+        <div class="register-links">
+          <p class="footer-text">
+            Já tem uma conta?
+            <a class="link" href="{{ url_for('auth.login') }}">Entre aqui</a>
+          </p>
+        </div>
+      </form>
+
+      <div class="register-footer-note">
+        <span class="footer-note-icon" aria-hidden="true">✦</span>
+        Seu cadastro é protegido e seus dados são tratados com segurança.
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const btnToggle = document.getElementById("toggleSenha");
+    const senhaEl = document.getElementById("senha");
+    const nomeEl = document.getElementById("nome");
+    const emailEl = document.getElementById("email");
+    const btnCadastro = document.getElementById("btnCadastro");
+    const cadastroForm = document.getElementById("cadastroForm");
+    const eyePath = document.getElementById("eyePath");
+    const meterBar = document.getElementById("meterBar");
+    const passwordStrength = document.getElementById("passwordStrength");
+
+    const PATH_OPEN =
+      "M12 5c-5 0-9.3 3.1-11 7.5C2.7 16.9 7 20 12 20s9.3-3.1 11-7.5C21.3 8.1 17 5 12 5zm0 12c-2.5 0-4.5-2-4.5-4.5S9.5 8 12 8s4.5 2 4.5 4.5S14.5 17 12 17zm0-7.2c-1.5 0-2.7 1.2-2.7 2.7S10.5 15.2 12 15.2s2.7-1.2 2.7-2.7S13.5 9.8 12 9.8z";
+
+    const PATH_CLOSED =
+      "M2.1 3.5 3.5 2.1 21.9 20.5 20.5 21.9l-2.3-2.3c-1.8.9-3.9 1.4-6.2 1.4-5 0-9.3-3.1-11-7.5 1-2.5 2.8-4.6 5.1-5.9L2.1 3.5zm6.2 6.2c-.4.7-.6 1.5-.6 2.3 0 2.5 2 4.5 4.5 4.5.8 0 1.6-.2 2.3-.6l-1.4-1.4c-.3.1-.6.2-.9.2-1.5 0-2.7-1.2-2.7-2.7 0-.3.1-.6.2-.9L8.3 9.7zM12 5c2.3 0 4.4.5 6.2 1.4 2.3 1.3 4.1 3.4 5.1 5.9-.7 1.8-1.8 3.4-3.2 4.6l-2.2-2.2c.5-.7.8-1.6.8-2.5 0-2.5-2-4.5-4.5-4.5-.9 0-1.8.3-2.5.8L9.5 6.3C10.3 5.9 11.1 5 12 5z";
+
+    eyePath.setAttribute("d", PATH_OPEN);
+
+    btnToggle.addEventListener("click", () => {
+      const hide = senhaEl.type === "password";
+      senhaEl.type = hide ? "text" : "password";
+      eyePath.setAttribute("d", hide ? PATH_CLOSED : PATH_OPEN);
+    });
+
+    function isValidEmail(value){
+      const v = (value || "").trim();
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+
+    function passwordScore(value){
+      let score = 0;
+      if (!value) return 0;
+      if (value.length >= 8) score++;
+      if (/[A-ZÀ-Ú]/.test(value)) score++;
+      if (/[a-zà-ú]/.test(value)) score++;
+      if (/\d/.test(value)) score++;
+      if (/[^A-Za-zÀ-Úà-ú0-9]/.test(value)) score++;
+      return Math.min(score, 5);
+    }
+
+    function updatePasswordMeter(){
+      const senha = senhaEl.value || "";
+      const score = passwordScore(senha);
+
+      meterBar.className = "meter-bar";
+      passwordStrength.textContent = "Força da senha: —";
+
+      if (!senha){
+        meterBar.style.width = "0%";
+        return;
+      }
+
+      const widths = ["18%", "35%", "55%", "78%", "100%"];
+      const labels = ["Muito fraca", "Fraca", "Média", "Boa", "Forte"];
+
+      meterBar.style.width = widths[Math.max(score - 1, 0)];
+      meterBar.classList.add(`strength-${score}`);
+      passwordStrength.textContent = `Força da senha: ${labels[Math.max(score - 1, 0)]}`;
+    }
+
+    function updateCadastroButton(){
+      const nomeOk = (nomeEl.value || "").trim().length >= 3;
+      const emailOk = isValidEmail(emailEl.value);
+      const senhaOk = (senhaEl.value || "").length >= 8;
+
+      const canSubmit = nomeOk && emailOk && senhaOk;
+      btnCadastro.disabled = !canSubmit;
+      btnCadastro.classList.toggle("is-active", canSubmit);
+    }
+
+    senhaEl.addEventListener("input", () => {
+      updatePasswordMeter();
+      updateCadastroButton();
+    });
+
+    nomeEl.addEventListener("input", updateCadastroButton);
+    emailEl.addEventListener("input", updateCadastroButton);
+
+    cadastroForm.addEventListener("submit", function(){
+      if (btnCadastro.disabled) return;
+      btnCadastro.classList.add("is-loading");
+      btnCadastro.disabled = true;
+    });
+
+    updatePasswordMeter();
+    updateCadastroButton();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minhas Reservas • LiteraWEB</title>
+    {% include "_includes/head_favicon.html" %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="relative min-h-screen flex flex-col text-slate-900 overflow-x-hidden">
+  {% macro fmt_dt(v) -%}
+     {{ v|dtbr if v else "—" }}
+  {%- endmacro %}
+
+  {% macro fmt_d(v) -%}
+     {{ v.strftime("%d/%m/%Y") if v else "—" }}
+  {%- endmacro %}
+
+  {% macro status_label(s) -%}
+    {% set k = (s or '')|lower %}
+    {% if k == 'pendente' %}Pendente
+    {% elif k in ['aprovado', 'aprovada'] %}Aprovado
+    {% elif k == 'separado' %}Separado
+    {% elif k == 'enviado' %}Enviado
+    {% elif k == 'retirado' %}Retirado
+    {% elif k == 'devolvido' %}Devolvido
+    {% elif k == 'cancelado' %}Cancelado
+    {% else %}{{ s or '—' }}{% endif %}
+  {%- endmacro %}
+
+  {% macro status_badge_class(s) -%}
+    {% set k = (s or '')|lower %}
+    {% if k == 'pendente' -%}
+      border-amber-200 bg-amber-50 text-amber-700
+    {%- elif k in ['aprovado', 'aprovada'] -%}
+      border-sky-200 bg-sky-50 text-sky-700
+    {%- elif k == 'separado' -%}
+      border-indigo-200 bg-indigo-50 text-indigo-700
+    {%- elif k == 'enviado' -%}
+      border-cyan-200 bg-cyan-50 text-cyan-700
+    {%- elif k == 'retirado' -%}
+      border-violet-200 bg-violet-50 text-violet-700
+    {%- elif k == 'devolvido' -%}
+      border-emerald-200 bg-emerald-50 text-emerald-700
+    {%- elif k == 'cancelado' -%}
+      border-rose-200 bg-rose-50 text-rose-700
+    {%- else -%}
+      border-slate-200 bg-slate-50 text-slate-700
+    {%- endif %}
+  {%- endmacro %}
+
+  {% macro tipo_badge_class(t) -%}
+    {% set k = (t or '')|lower %}
+    {% if k == 'retirada' -%}
+      border-slate-200 bg-white text-slate-700
+    {%- elif k == 'entrega' -%}
+      border-purple-200 bg-purple-50 text-purple-700
+    {%- else -%}
+      border-slate-200 bg-slate-50 text-slate-700
+    {%- endif %}
+  {%- endmacro %}
+
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute -top-28 -left-28 h-96 w-96 rounded-full bg-sky-400/25 blur-3xl"></div>
+    <div class="absolute -top-24 -right-32 h-[28rem] w-[28rem] rounded-full bg-cyan-400/20 blur-3xl"></div>
+    <div class="absolute top-[45%] -left-24 h-80 w-80 rounded-full bg-indigo-400/14 blur-3xl"></div>
+    <div class="absolute bottom-[-6rem] right-[10%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-400/12 blur-3xl"></div>
+  </div>
+
+  {% include "_includes/navbar.html" %}
+  {% include "_includes/mobile_nav.html" %}
+
+  {% set ns = namespace(total=0, pendente=0, aprovado=0, separado=0, enviado=0, retirado=0, devolvido=0, cancelado=0, ativas=0) %}
+  {% for r in (reservas if reservas else []) %}
+    {% set st = (r.status or '')|lower %}
+    {% set ns.total = ns.total + 1 %}
+    {% if st == 'pendente' %}
+      {% set ns.pendente = ns.pendente + 1 %}
+    {% elif st in ['aprovado', 'aprovada'] %}
+      {% set ns.aprovado = ns.aprovado + 1 %}
+    {% elif st == 'separado' %}
+      {% set ns.separado = ns.separado + 1 %}
+    {% elif st == 'enviado' %}
+      {% set ns.enviado = ns.enviado + 1 %}
+    {% elif st == 'retirado' %}
+      {% set ns.retirado = ns.retirado + 1 %}
+    {% elif st == 'devolvido' %}
+      {% set ns.devolvido = ns.devolvido + 1 %}
+    {% elif st == 'cancelado' %}
+      {% set ns.cancelado = ns.cancelado + 1 %}
+    {% endif %}
+
+    {% if st not in ['devolvido', 'cancelado'] %}
+      {% set ns.ativas = ns.ativas + 1 %}
+    {% endif %}
+  {% endfor %}
+
+  <main class="container py-10 flex-1">
+    <div class="mb-6 md:mb-8">
+      <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Minhas reservas</h1>
+      <p class="mt-1 text-slate-600 font-semibold">
+        Acompanhe o andamento das suas reservas, prazos e dados do empréstimo.
+      </p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-6 space-y-3">
+          {% for category, message in messages %}
+            {% set cat = category or 'info' %}
+
+            <div class="rounded-xl border px-4 py-3 text-sm font-extrabold
+              {% if cat in ['success', 'sucesso'] %}
+                border-emerald-200 bg-emerald-50 text-emerald-800
+              {% elif cat in ['error', 'danger', 'erro'] %}
+                border-rose-200 bg-rose-50 text-rose-800
+              {% elif cat in ['warning', 'aviso'] %}
+                border-amber-200 bg-amber-50 text-amber-800
+              {% else %}
+                border-sky-200 bg-sky-50 text-sky-800
+              {% endif %}
+            ">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section id="reservasAreaDinamica">
+      <div id="reservasResumoCards" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+      <div class="rounded-2xl border border-slate-200 bg-white/80 backdrop-blur p-4 shadow-soft">
+        <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">Total de reservas</div>
+        <div class="mt-1 text-2xl font-extrabold text-slate-900">{{ ns.total }}</div>
+        <div class="mt-1 text-sm font-semibold text-slate-500">Somente desta conta</div>
+      </div>
+
+      <div class="rounded-2xl border border-sky-200 bg-sky-50/80 backdrop-blur p-4 shadow-soft">
+        <div class="text-xs uppercase tracking-wide font-extrabold text-sky-600">Ativas</div>
+        <div class="mt-1 text-2xl font-extrabold text-sky-900">{{ ns.ativas }}</div>
+        <div class="mt-1 text-sm font-semibold text-sky-700">Em andamento</div>
+      </div>
+
+      <div class="rounded-2xl border border-amber-200 bg-amber-50/80 backdrop-blur p-4 shadow-soft">
+        <div class="text-xs uppercase tracking-wide font-extrabold text-amber-700">Aguardando ação</div>
+        <div class="mt-1 text-2xl font-extrabold text-amber-900">
+          {{ ns.pendente + ns.aprovado + ns.separado + ns.enviado }}
+        </div>
+        <div class="mt-1 text-sm font-semibold text-amber-700">Pendente / aprovado / separado / enviado</div>
+      </div>
+
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50/80 backdrop-blur p-4 shadow-soft">
+        <div class="text-xs uppercase tracking-wide font-extrabold text-emerald-700">Finalizadas</div>
+        <div class="mt-1 text-2xl font-extrabold text-emerald-900">{{ ns.devolvido }}</div>
+        <div class="mt-1 text-sm font-semibold text-emerald-700">Devolvidas</div>
+      </div>
+    </div>
+
+    {% if reservas %}
+      <div class="mb-6 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur p-4 shadow-soft">
+        <div class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+          <div class="flex-1">
+            <label for="filtroReservaLivro" class="block text-xs uppercase tracking-wide font-extrabold text-slate-500 mb-2">
+              Buscar por nome do livro
+            </label>
+            <div class="relative">
+              <input
+                id="filtroReservaLivro"
+                type="text"
+                placeholder="Digite o título do livro..."
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                oninput="applyReservasFilters()"
+              >
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+            </div>
+          </div>
+
+          <div class="flex items-end gap-2">
+            <button type="button"
+                    onclick="clearReservasFilters()"
+                    class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+              Limpar
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3 text-xs font-semibold text-slate-500" id="reservasFiltroInfo">
+          Dica: clique em um status colorido abaixo para trazer esse status para o topo da lista.
+        </div>
+      </div>
+    {% endif %}
+
+    {% if reservas %}
+      <div class="mb-6 flex flex-wrap gap-2" id="statusChipsBar">
+        <button type="button"
+                data-status-chip="pendente"
+                onclick="toggleStatusPriority('pendente')"
+                class="status-chip inline-flex items-center rounded-full border {{ status_badge_class('pendente') }} px-3 py-1 text-xs font-extrabold transition hover:brightness-95">
+          Pendente: {{ ns.pendente }}
+        </button>
+
+        <button type="button"
+                data-status-chip="aprovado"
+                onclick="toggleStatusPriority('aprovado')"
+                class="status-chip inline-flex items-center rounded-full border {{ status_badge_class('aprovado') }} px-3 py-1 text-xs font-extrabold transition hover:brightness-95">
+          Aprovado: {{ ns.aprovado }}
+        </button>
+
+        <button type="button"
+                data-status-chip="separado"
+                onclick="toggleStatusPriority('separado')"
+                class="status-chip inline-flex items-center rounded-full border {{ status_badge_class('separado') }} px-3 py-1 text-xs font-extrabold transition hover:brightness-95">
+          Separado: {{ ns.separado }}
+        </button>
+
+        <button type="button"
+                data-status-chip="enviado"
+                onclick="toggleStatusPriority('enviado')"
+                class="status-chip inline-flex items-center rounded-full border {{ status_badge_class('enviado') }} px-3 py-1 text-xs font-extrabold transition hover:brightness-95">
+          Enviado: {{ ns.enviado }}
+        </button>
+
+        <button type="button"
+                data-status-chip="retirado"
+                onclick="toggleStatusPriority('retirado')"
+                class="status-chip inline-flex items-center rounded-full border {{ status_badge_class('retirado') }} px-3 py-1 text-xs font-extrabold transition hover:brightness-95">
+          Retirado: {{ ns.retirado }}
+        </button>
+
+        <button type="button"
+                data-status-chip="devolvido"
+                onclick="toggleStatusPriority('devolvido')"
+                class="status-chip inline-flex items-center rounded-full border {{ status_badge_class('devolvido') }} px-3 py-1 text-xs font-extrabold transition hover:brightness-95">
+          Devolvido: {{ ns.devolvido }}
+        </button>
+
+        <button type="button"
+                data-status-chip="cancelado"
+                onclick="toggleStatusPriority('cancelado')"
+                class="status-chip inline-flex items-center rounded-full border {{ status_badge_class('cancelado') }} px-3 py-1 text-xs font-extrabold transition hover:brightness-95">
+          Cancelado: {{ ns.cancelado }}
+        </button>
+      </div>
+    {% endif %}
+
+    <div class="grid gap-4 md:gap-5" id="reservasLista">
+      {% if not reservas %}
+        <div class="rounded-2xl border border-slate-200 bg-white/80 backdrop-blur p-6 text-slate-700 font-semibold">
+          <div class="text-lg font-extrabold text-slate-900">Você ainda não fez nenhuma reserva.</div>
+          <p class="mt-2 text-sm text-slate-600 font-semibold">
+            Quando você reservar um livro pelo acervo, ele aparecerá aqui com status, prazos e acompanhamento completo.
+          </p>
+          <a href="{{ url_for('main.acervo') }}"
+             class="mt-4 inline-flex items-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-4 py-2 text-sm font-extrabold text-white shadow hover:brightness-105">
+            Ir para o acervo
+          </a>
+        </div>
+      {% endif %}
+
+      {% for r in reservas %}
+        {% set ex = r.exemplar if r.exemplar is defined else None %}
+        {% set livro = (ex.livro if ex and ex.livro is defined else None) %}
+        {% set st = (r.status or '')|lower %}
+        {% if st == 'aprovada' %}
+          {% set st_norm = 'aprovado' %}
+        {% else %}
+          {% set st_norm = st %}
+        {% endif %}
+        {% set tipo = (r.tipo or '')|lower %}
+        {% set is_cancelado = (st == 'cancelado') %}
+
+        {% if tipo == 'retirada' %}
+          {% set etapas = [('pendente','Pendente'), ('aprovado','Aprovado'), ('separado','Separado'), ('retirado','Retirado'), ('devolvido','Devolvido')] %}
+          {% set ordem = {'pendente':0, 'aprovado':1, 'aprovada':1, 'separado':2, 'retirado':3, 'devolvido':4} %}
+        {% else %}
+          {% set etapas = [('pendente','Pendente'), ('aprovado','Aprovado'), ('enviado','Enviado'), ('devolvido','Devolvido')] %}
+          {% set ordem = {'pendente':0, 'aprovado':1, 'aprovada':1, 'enviado':2, 'devolvido':3} %}
+        {% endif %}
+        {% set idx_atual = ordem.get(st, -1) %}
+        {% set details_id = 'reserva-details-' ~ r.id %}
+        {% set btn_id = 'reserva-toggle-' ~ r.id %}
+
+        <div class="rounded-2xl bg-gradient-to-br from-sky-200/50 via-white/35 to-indigo-200/50 p-[1px] shadow-soft"
+             data-reserva-card
+             data-status="{{ st_norm }}"
+             data-original-order="{{ loop.index0 }}"
+             data-titulo="{{ (livro.titulo if livro else '')|e }}"
+             data-autor="{{ (livro.autor if livro else '')|e }}">
+          <div class="rounded-2xl bg-white/85 backdrop-blur p-4 md:p-5">
+            <div class="flex flex-col lg:flex-row gap-4">
+              <div class="shrink-0">
+                {% if livro and livro.capa_arquivo %}
+                  <img src="{{ url_for('static', filename=livro.capa_arquivo) }}"
+                       alt="Capa de {{ livro.titulo }}"
+                       class="h-36 w-24 md:h-40 md:w-28 rounded-xl object-cover border border-slate-200 shadow-sm">
+                {% else %}
+                  <div class="h-36 w-24 md:h-40 md:w-28 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-100 to-slate-200 grid place-items-center text-xs text-slate-500 font-extrabold text-center p-2">
+                    Sem capa
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                      <span class="inline-flex items-center rounded-full border {{ status_badge_class(r.status) }} px-3 py-1 text-xs font-extrabold">
+                        {{ status_label(r.status) }}
+                      </span>
+
+                      <span class="inline-flex items-center rounded-full border {{ tipo_badge_class(r.tipo) }} px-3 py-1 text-xs font-extrabold">
+                        {{ (r.tipo or '—')|capitalize }}
+                      </span>
+
+                      <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 px-3 py-1 text-xs font-extrabold">
+                        Reserva #{{ loop.index }}
+                      </span>
+                    </div>
+
+                    <h2 class="text-lg md:text-xl font-extrabold text-slate-900 truncate">
+                      {{ livro.titulo if livro else 'Livro não encontrado' }}
+                    </h2>
+
+                    <div class="mt-1 text-sm font-semibold text-slate-600 flex flex-wrap gap-x-4 gap-y-1">
+                      <span><span class="text-slate-500">Autor:</span> {{ livro.autor if livro and livro.autor else '—' }}</span>
+                      <span><span class="text-slate-500">Gênero:</span> {{ livro.genero if livro and livro.genero else '—' }}</span>
+                      <span><span class="text-slate-500">Exemplar:</span> {{ ex.codigo_exemplar if ex and ex.codigo_exemplar else '—' }}</span>
+                    </div>
+
+                    <div class="mt-2 text-sm font-semibold text-slate-600 flex flex-wrap gap-x-4 gap-y-1">
+                      <span><span class="text-slate-500">Criada em:</span> {{ fmt_dt(r.criado_em) }}</span>
+                      {% if r.devolver_ate %}
+                        <span><span class="text-slate-500">Devolver até:</span> {{ fmt_d(r.devolver_ate) }}</span>
+                      {% endif %}
+                      {% if r.codigo_rastreio %}
+                        <span><span class="text-slate-500">Rastreio:</span> <span class="text-slate-900">{{ r.codigo_rastreio }}</span></span>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="w-full xl:w-auto xl:min-w-[300px]">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                          <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500 mb-1">
+                            Resumo rápido
+                          </div>
+
+                          {% if st == 'pendente' %}
+                            <p class="text-sm font-semibold text-slate-700">
+                              Sua reserva foi criada e está aguardando análise/aprovação.
+                            </p>
+                          {% elif st in ['aprovado', 'aprovada'] %}
+                            <p class="text-sm font-semibold text-slate-700">
+                              Reserva aprovada. Aguarde a próxima etapa
+                              {% if tipo == 'retirada' %}(separação para retirada){% else %}(envio){% endif %}.
+                            </p>
+                          {% elif st == 'separado' %}
+                            <p class="text-sm font-semibold text-slate-700">
+                              Seu livro foi separado e está aguardando retirada no prazo informado.
+                            </p>
+                          {% elif st == 'enviado' %}
+                            <p class="text-sm font-semibold text-slate-700">
+                              O empréstimo foi iniciado por entrega. Acompanhe o prazo de devolução.
+                            </p>
+                          {% elif st == 'retirado' %}
+                            <p class="text-sm font-semibold text-slate-700">
+                              Empréstimo iniciado. Fique atento à data limite de devolução.
+                            </p>
+                          {% elif st == 'devolvido' %}
+                            <p class="text-sm font-semibold text-emerald-700">
+                              Reserva finalizada com devolução registrada.
+                            </p>
+                          {% elif st == 'cancelado' %}
+                            <p class="text-sm font-semibold text-rose-700">
+                              Reserva cancelada.
+                            </p>
+                          {% else %}
+                            <p class="text-sm font-semibold text-slate-700">
+                              Acompanhe as próximas atualizações desta reserva.
+                            </p>
+                          {% endif %}
+                        </div>
+
+                        <button type="button"
+                                id="{{ btn_id }}"
+                                class="reserva-toggle shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition"
+                                aria-expanded="false"
+                                aria-controls="{{ details_id }}"
+                                aria-label="Expandir detalhes da reserva"
+                                onclick="toggleReservaCard(this)">
+                          <svg class="reserva-toggle-icon h-5 w-5 transition-transform duration-200"
+                               viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="{{ details_id }}" class="reserva-details hidden mt-4">
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                      <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">
+                        Etapas da reserva
+                      </div>
+                      {% if is_cancelado %}
+                        <span class="text-xs font-extrabold text-rose-700">Fluxo interrompido (cancelado)</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="w-full">
+                      <div class="relative w-full min-w-0 pb-1">
+                        {% if etapas|length > 1 %}
+                          <div class="pointer-events-none absolute inset-x-0 top-[18px] px-5 z-0">
+                            <div class="grid gap-2" style="grid-template-columns: repeat({{ etapas|length - 1 }}, minmax(0,1fr));">
+                              {% for _ in range(etapas|length - 1) %}
+                                <div class="h-0.5 bg-slate-200"></div>
+                              {% endfor %}
+                            </div>
+                          </div>
+                        {% endif %}
+
+                        <div class="relative z-10 grid gap-2" style="grid-template-columns: repeat({{ etapas|length }}, minmax(0,1fr));">
+                          {% for codigo, label in etapas %}
+                            {% set idx_etapa = loop.index0 %}
+                            {% set done = (not is_cancelado) and (idx_atual > idx_etapa) %}
+                            {% set current = (not is_cancelado) and (idx_atual == idx_etapa) %}
+
+                            <div class="text-center min-w-0">
+                              <div class="mx-auto h-8 w-8 sm:h-9 sm:w-9 rounded-full border grid place-items-center text-[11px] sm:text-xs font-extrabold
+                                {% if is_cancelado %}
+                                  border-rose-200 bg-rose-50 text-rose-700
+                                {% elif current %}
+                                  border-sky-300 bg-sky-100 text-sky-800 ring-4 ring-sky-100
+                                {% elif done %}
+                                  border-emerald-300 bg-emerald-100 text-emerald-800
+                                {% else %}
+                                  border-slate-200 bg-white text-slate-500
+                                {% endif %}">
+                                {% if is_cancelado %}
+                                  !
+                                {% elif done %}
+                                  ✓
+                                {% elif current %}
+                                  ●
+                                {% else %}
+                                  {{ loop.index }}
+                                {% endif %}
+                              </div>
+
+                              <div class="mt-2 px-1 text-[10px] sm:text-xs leading-tight font-extrabold whitespace-normal break-words
+                                {% if current %}text-slate-900{% elif done %}text-emerald-700{% else %}text-slate-500{% endif %}">
+                                {{ label }}
+                              </div>
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 grid gap-4 xl:grid-cols-2">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                      <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500 mb-3">
+                        Datas e prazos
+                      </div>
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div class="text-xs font-extrabold uppercase tracking-wide text-slate-500">Reserva criada em</div>
+                          <div class="mt-1 font-extrabold text-slate-900">{{ fmt_dt(r.criado_em) }}</div>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div class="text-xs font-extrabold uppercase tracking-wide text-slate-500">Prazo para retirada</div>
+                          <div class="mt-1 font-extrabold text-slate-900">{{ fmt_dt(r.retirar_ate) }}</div>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div class="text-xs font-extrabold uppercase tracking-wide text-slate-500">Empréstimo iniciado em</div>
+                          <div class="mt-1 font-extrabold text-slate-900">{{ fmt_dt(r.emprestado_em) }}</div>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          <div class="text-xs font-extrabold uppercase tracking-wide text-slate-500">Devolver até</div>
+                          <div class="mt-1 font-extrabold text-slate-900">{{ fmt_d(r.devolver_ate) }}</div>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:col-span-2">
+                          <div class="text-xs font-extrabold uppercase tracking-wide text-slate-500">Devolução registrada em</div>
+                          <div class="mt-1 font-extrabold text-slate-900">{{ fmt_dt(r.devolvido_em) }}</div>
+                        </div>
+                      </div>
+
+                      <div class="mt-3 space-y-2">
+                        {% if st == 'separado' and r.retirar_ate %}
+                          <div class="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800">
+                            Seu exemplar está separado. Retire até <span class="font-extrabold">{{ fmt_dt(r.retirar_ate) }}</span>.
+                          </div>
+                        {% endif %}
+
+                        {% if st in ['retirado', 'enviado'] and r.devolver_ate %}
+                          <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+                            Prazo atual de devolução: <span class="font-extrabold">{{ fmt_d(r.devolver_ate) }}</span>.
+                          </div>
+
+                          {% if hoje is defined and hoje and r.devolver_ate < hoje %}
+                            {% set dias_atraso = (hoje - r.devolver_ate).days %}
+
+
+                            <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800">
+                              Este livro está atrasado há
+                              <span class="font-extrabold">
+                                {{ dias_atraso }} dia{% if dias_atraso != 1 %}s{% endif %}
+                              </span>.
+                            </div>
+                          {% endif %}
+                        {% endif %}
+
+                        {% if st == 'devolvido' and r.devolvido_em and r.devolver_ate %}
+                          {% set atrasou = (r.devolvido_em.date() > r.devolver_ate) %}
+                          {% if atrasou %}
+                            <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800">
+                              Devolução registrada após o prazo (atraso identificado).
+                            </div>
+                          {% else %}
+                            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+                              Devolução registrada dentro do prazo.
+                            </div>
+                          {% endif %}
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                      <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500 mb-3">
+                        Detalhes da reserva
+                      </div>
+
+                      <div class="space-y-3 text-sm font-semibold text-slate-700">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">Nº da sua reserva</div>
+                            <div class="mt-1 font-extrabold text-slate-900">Reserva #{{ loop.index }}</div>
+                          </div>
+
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">ID interno do sistema</div>
+                            <div class="mt-1 font-extrabold text-slate-900">#{{ r.id }}</div>
+                          </div>
+
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">Tipo</div>
+                            <div class="mt-1 font-extrabold text-slate-900">{{ (r.tipo or '—')|capitalize }}</div>
+                          </div>
+
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">Status atual</div>
+                            <div class="mt-1 font-extrabold text-slate-900">{{ status_label(r.status) }}</div>
+                          </div>
+
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">Exemplar</div>
+                            <div class="mt-1 font-extrabold text-slate-900">{{ ex.codigo_exemplar if ex and ex.codigo_exemplar else '—' }}</div>
+                          </div>
+
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500">Status do exemplar</div>
+                            <div class="mt-1 font-extrabold text-slate-900">{{ ex.status|capitalize if ex and ex.status else '—' }}</div>
+                          </div>
+                        </div>
+
+                        {% if livro %}
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500 mb-2">Dados do livro</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div><span class="text-slate-500">Título:</span> <span class="font-extrabold text-slate-900">{{ livro.titulo or '—' }}</span></div>
+                              <div><span class="text-slate-500">Autor:</span> <span class="font-extrabold text-slate-900">{{ livro.autor or '—' }}</span></div>
+                              <div><span class="text-slate-500">Gênero:</span> <span class="font-extrabold text-slate-900">{{ livro.genero or '—' }}</span></div>
+                              <div><span class="text-slate-500">Edição:</span> <span class="font-extrabold text-slate-900">{{ livro.edicao or '—' }}</span></div>
+                              <div class="sm:col-span-2"><span class="text-slate-500">ISBN:</span> <span class="font-extrabold text-slate-900">{{ livro.isbn or '—' }}</span></div>
+                            </div>
+                          </div>
+                        {% endif %}
+
+                        {% if r.tipo == "entrega" %}
+                          <div class="rounded-xl border border-purple-200 bg-purple-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-purple-700 mb-1">Endereço de entrega</div>
+                            <div class="text-purple-900 font-extrabold leading-relaxed">
+                              {{ r.rua or '—' }}, {{ r.numero or 's/n' }}
+                              {% if r.complemento %} • {{ r.complemento }}{% endif %}
+                              <br>
+                              {{ r.bairro or '—' }} • {{ r.cidade or '—' }}/{{ r.uf or '—' }}
+                              {% if r.cep %}<br>CEP: {{ r.cep }}{% endif %}
+                            </div>
+                          </div>
+                        {% endif %}
+
+                        {% if r.codigo_rastreio %}
+                          <div class="rounded-xl border border-cyan-200 bg-cyan-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-cyan-700 mb-1">Código de rastreio</div>
+                            <div class="text-cyan-900 font-extrabold">{{ r.codigo_rastreio }}</div>
+                          </div>
+                        {% endif %}
+
+                        {% if r.observacao %}
+                          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div class="text-xs uppercase tracking-wide font-extrabold text-slate-500 mb-1">Observação</div>
+                            <div class="text-slate-800 font-semibold whitespace-pre-line">{{ r.observacao }}</div>
+                          </div>
+                        {% endif %}
+
+                        <div class="flex flex-wrap gap-2 pt-1">
+                          {% if st in ['pendente', 'aprovada', 'aprovado', 'separado'] %}
+                            <form method="post"
+                                  action="{{ url_for('main.cancelar_reserva', reserva_id=r.id) }}"
+                                  class="form-cancelar-reserva"
+                                  data-livro="{{ (livro.titulo if livro else 'este livro')|e }}">
+                              <button type="submit"
+                                      class="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-extrabold text-rose-700 hover:bg-rose-100">
+                                Cancelar reserva
+                              </button>
+                            </form>
+                          {% endif %}
+
+                          {% set max_ren = (r.max_renovacoes_aplicado or 1)|int %}
+                          {% set ren_atual = (r.renovacoes or 0)|int %}
+
+                          {% set esta_atrasado = (
+                            st in ['retirado', 'enviado']
+                            and r.devolver_ate
+                            and hoje is defined
+                            and hoje
+                            and r.devolver_ate < hoje
+                          ) %}
+
+                          {% set pode_renovar = (
+                            st in ['retirado', 'enviado']
+                            and r.devolvido_em is none
+                            and r.devolver_ate
+                            and hoje is defined
+                            and hoje
+                            and r.devolver_ate >= hoje
+                            and ren_atual < max_ren
+                          ) %}
+
+                          {% if pode_renovar %}
+                            <form method="post"
+                                  action="{{ url_for('main.renovar_reserva', reserva_id=r.id) }}">
+                              <button type="submit"
+                                      class="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-extrabold text-emerald-700 hover:bg-emerald-100">
+                                Renovar empréstimo
+                              </button>
+                            </form>
+
+                          {% elif esta_atrasado %}
+                            <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800">
+                              Renovação indisponível: este livro está atrasado.
+                            </div>
+
+                          {% elif st in ['retirado', 'enviado'] and ren_atual >= max_ren %}
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+                              Limite de renovação atingido.
+                            </div>
+                          {% endif %}
+
+                          {% if livro %}
+                            <a href="{{ url_for('main.livro_detalhe', livro_id=livro.id) }}"
+                               class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+                              Ver livro
+                            </a>
+                          {% endif %}
+
+                          <a href="{{ url_for('main.acervo') }}"
+                             class="inline-flex items-center rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-extrabold text-sky-700 hover:bg-sky-100">
+                            Buscar outro livro
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if reservas %}
+      <div id="reservasEmptySearch" class="hidden mt-4 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur p-6 text-slate-700 font-semibold shadow-soft">
+        <div class="text-lg font-extrabold text-slate-900">Nenhuma reserva encontrada</div>
+        <p class="mt-2 text-sm text-slate-600">
+          Tente outro nome de livro ou clique em <strong>Limpar</strong> para remover os filtros.
+        </p>
+      </div>
+    {% endif %}
+    </section>
+  </main>
+
+  {% include "_includes/footer.html" %}
+
+<script>
+  function closeAllUserMenus() {
+    document.querySelectorAll('[data-user-menu] .user-menu').forEach(menu => {
+      menu.classList.add('hidden');
+    });
+    document.querySelectorAll('[data-user-menu] button[aria-haspopup="menu"]').forEach(btn => {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function toggleUserMenu(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const wrap = event.currentTarget.closest('[data-user-menu]');
+    if (!wrap) return;
+
+    const menu = wrap.querySelector('.user-menu');
+    const btn = wrap.querySelector('button[aria-haspopup="menu"]');
+
+    const isOpen = menu && !menu.classList.contains('hidden');
+
+    closeAllUserMenus();
+
+    if (menu && !isOpen) {
+      menu.classList.remove('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function openMenu(open) {
+    const backdrop = document.getElementById("backdrop");
+    const mnav = document.getElementById("mnav");
+    if (!backdrop || !mnav) return;
+
+    backdrop.classList.toggle("hidden", !open);
+    mnav.style.transform = open ? "translateX(0)" : "translateX(120%)";
+  }
+
+  function closeReservaCard(card) {
+    if (!card) return;
+    const details = card.querySelector('.reserva-details');
+    const button = card.querySelector('.reserva-toggle');
+    const icon = card.querySelector('.reserva-toggle-icon');
+
+    if (details) details.classList.add('hidden');
+    if (button) {
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-label', 'Expandir detalhes da reserva');
+    }
+    if (icon) icon.classList.remove('rotate-180');
+  }
+
+  function openReservaCard(card) {
+    if (!card) return;
+    const details = card.querySelector('.reserva-details');
+    const button = card.querySelector('.reserva-toggle');
+    const icon = card.querySelector('.reserva-toggle-icon');
+
+    if (details) details.classList.remove('hidden');
+    if (button) {
+      button.setAttribute('aria-expanded', 'true');
+      button.setAttribute('aria-label', 'Recolher detalhes da reserva');
+    }
+    if (icon) icon.classList.add('rotate-180');
+  }
+
+  function closeAllReservaCards(exceptCard = null) {
+    document.querySelectorAll('[data-reserva-card]').forEach(card => {
+      if (exceptCard && card === exceptCard) return;
+      closeReservaCard(card);
+    });
+  }
+
+  function toggleReservaCard(button) {
+    const card = button.closest('[data-reserva-card]');
+    if (!card) return;
+
+    const expanded = button.getAttribute('aria-expanded') === 'true';
+    closeAllReservaCards(card);
+
+    if (expanded) {
+      closeReservaCard(card);
+    } else {
+      openReservaCard(card);
+    }
+  }
+
+  let selectedPriorityStatus = null;
+
+  function normalizeText(v) {
+    return (v || "")
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  }
+
+  function updateStatusChipUI() {
+    document.querySelectorAll('.status-chip[data-status-chip]').forEach(chip => {
+      const chipStatus = chip.getAttribute('data-status-chip');
+
+      if (selectedPriorityStatus && chipStatus === selectedPriorityStatus) {
+        chip.classList.add('ring-4', 'ring-slate-200', 'scale-[1.02]');
+        chip.classList.remove('opacity-80');
+      } else {
+        chip.classList.remove('ring-4', 'ring-slate-200', 'scale-[1.02]');
+        chip.classList.add('opacity-80');
+      }
+    });
+
+    if (!selectedPriorityStatus) {
+      document.querySelectorAll('.status-chip[data-status-chip]').forEach(chip => {
+        chip.classList.remove('opacity-80');
+      });
+    }
+  }
+
+  function toggleStatusPriority(statusKey) {
+    if (selectedPriorityStatus === statusKey) {
+      selectedPriorityStatus = null;
+    } else {
+      selectedPriorityStatus = statusKey;
+    }
+
+    updateStatusChipUI();
+    applyReservasFilters();
+  }
+
+  function clearReservasFilters() {
+    const input = document.getElementById('filtroReservaLivro');
+    if (input) input.value = '';
+
+    selectedPriorityStatus = null;
+    updateStatusChipUI();
+    applyReservasFilters();
+  }
+
+  function applyReservasFilters() {
+    const lista = document.getElementById('reservasLista');
+    if (!lista) return;
+
+    const cards = Array.from(lista.querySelectorAll('[data-reserva-card]'));
+    if (!cards.length) return;
+
+    const input = document.getElementById('filtroReservaLivro');
+    const rawQuery = input ? input.value : '';
+    const q = normalizeText(rawQuery);
+
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const titulo = normalizeText(card.getAttribute('data-titulo') || '');
+      const autor = normalizeText(card.getAttribute('data-autor') || '');
+      const matchSearch = !q || titulo.includes(q) || autor.includes(q);
+
+      if (matchSearch) {
+        card.classList.remove('hidden');
+        visibleCount += 1;
+      } else {
+        card.classList.add('hidden');
+        closeReservaCard(card);
+      }
+    });
+
+    const visibleCards = cards.filter(card => !card.classList.contains('hidden'));
+
+    visibleCards.sort((a, b) => {
+      const aStatus = (a.getAttribute('data-status') || '').toLowerCase();
+      const bStatus = (b.getAttribute('data-status') || '').toLowerCase();
+      const aMatch = selectedPriorityStatus ? (aStatus === selectedPriorityStatus) : false;
+      const bMatch = selectedPriorityStatus ? (bStatus === selectedPriorityStatus) : false;
+
+      if (aMatch !== bMatch) {
+        return aMatch ? -1 : 1;
+      }
+
+      const aOrder = parseInt(a.getAttribute('data-original-order') || '0', 10);
+      const bOrder = parseInt(b.getAttribute('data-original-order') || '0', 10);
+      return aOrder - bOrder;
+    });
+
+    visibleCards.forEach(card => lista.appendChild(card));
+    cards.filter(card => card.classList.contains('hidden')).forEach(card => lista.appendChild(card));
+
+    const info = document.getElementById('reservasFiltroInfo');
+    if (info) {
+      const partes = [];
+      if (q) partes.push(`busca por "${rawQuery}"`);
+      if (selectedPriorityStatus) {
+        const labels = {
+          pendente: 'Pendente',
+          aprovado: 'Aprovado',
+          separado: 'Separado',
+          enviado: 'Enviado',
+          retirado: 'Retirado',
+          devolvido: 'Devolvido',
+          cancelado: 'Cancelado'
+        };
+        partes.push(`prioridade: ${labels[selectedPriorityStatus] || selectedPriorityStatus}`);
+      }
+
+      if (!partes.length) {
+        info.textContent = 'Dica: clique em um status colorido abaixo para trazer esse status para o topo da lista.';
+      } else {
+        info.textContent = `Filtro ativo: ${partes.join(' • ')}. (${visibleCount} resultado(s))`;
+      }
+    }
+
+    const emptyBox = document.getElementById('reservasEmptySearch');
+    if (emptyBox) {
+      if (visibleCount === 0) {
+        emptyBox.classList.remove('hidden');
+      } else {
+        emptyBox.classList.add('hidden');
+      }
+    }
+  }
+
+  document.addEventListener('click', () => {
+    closeAllUserMenus();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAllUserMenus();
+      closeAllReservaCards();
+      openMenu(false);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth >= 768) openMenu(false);
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateStatusChipUI();
+    applyReservasFilters();
+  });
+
+</script>
+  <script>
+  window.LITERA_RESERVAS_SIGNATURE = {{ reservas_signature|default('', true)|tojson }};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  function escapeHtml(valor) {
+    const div = document.createElement("div");
+    div.textContent = valor || "";
+    return div.innerHTML;
+  }
+
+  document.addEventListener("submit", function (event) {
+    const form = event.target.closest(".form-cancelar-reserva");
+
+    if (!form) return;
+
+    event.preventDefault();
+
+    const nomeLivro = escapeHtml(form.dataset.livro || "este livro");
+
+    Swal.fire({
+      title: "Cancelar reserva?",
+      html: `Você tem certeza que deseja cancelar a reserva de <strong>${nomeLivro}</strong>?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sim, cancelar",
+      cancelButtonText: "Não, voltar",
+      reverseButtons: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      background: "#ffffff",
+      color: "#0f172a"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        form.submit();
+      }
+    });
+  });
+</script>
+<script>
+  (function iniciarAtualizacaoSemRecarregar() {
+    const signatureEndpoint = "{{ url_for('main.minhas_reservas_assinatura') }}";
+    const paginaEndpoint = "{{ url_for('main.minhas_reservas') }}";
+
+    let assinaturaAtual = window.LITERA_RESERVAS_SIGNATURE || "";
+    let verificando = false;
+    let atualizandoHtml = false;
+
+    function capturarReservasAbertas() {
+      const abertas = [];
+
+      document.querySelectorAll(".reserva-details").forEach((details) => {
+        if (!details.classList.contains("hidden")) {
+          abertas.push(details.id);
+        }
+      });
+
+      return abertas;
+    }
+
+    function reabrirReservasAbertas(idsAbertos) {
+      idsAbertos.forEach((detailsId) => {
+        const details = document.getElementById(detailsId);
+        if (!details) return;
+
+        const card = details.closest("[data-reserva-card]");
+        if (!card) return;
+
+        if (typeof openReservaCard === "function") {
+          openReservaCard(card);
+        } else {
+          details.classList.remove("hidden");
+
+          const button = card.querySelector(".reserva-toggle");
+          const icon = card.querySelector(".reserva-toggle-icon");
+
+          if (button) {
+            button.setAttribute("aria-expanded", "true");
+            button.setAttribute("aria-label", "Recolher detalhes da reserva");
+          }
+
+          if (icon) {
+            icon.classList.add("rotate-180");
+          }
+        }
+      });
+    }
+
+    function substituirBlocoPorId(documentoNovo, id) {
+      const atual = document.getElementById(id);
+      const novo = documentoNovo.getElementById(id);
+
+      if (!atual || !novo) {
+        return false;
+      }
+
+      atual.replaceWith(novo);
+      return true;
+    }
+
+    async function atualizarHtmlDaPagina() {
+      if (atualizandoHtml) return;
+      atualizandoHtml = true;
+
+      const reservasAbertas = capturarReservasAbertas();
+
+      try {
+        const resposta = await fetch(paginaEndpoint, {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        });
+
+        if (!resposta.ok) {
+          throw new Error("Erro ao buscar página de reservas");
+        }
+
+        const html = await resposta.text();
+        const parser = new DOMParser();
+        const documentoNovo = parser.parseFromString(html, "text/html");
+
+        const areaAtualizada = substituirBlocoPorId(documentoNovo, "reservasAreaDinamica");
+
+        if (!areaAtualizada) {
+          throw new Error("Área dinâmica de reservas não encontrada no HTML retornado");
+        }
+
+        if (typeof updateStatusChipUI === "function") {
+          updateStatusChipUI();
+        }
+
+        if (typeof applyReservasFilters === "function") {
+          applyReservasFilters();
+        }
+
+        reabrirReservasAbertas(reservasAbertas);
+
+      } catch (erro) {
+        console.warn("Falha ao atualizar a área de reservas:", erro);
+      } finally {
+        atualizandoHtml = false;
+      }
+    }
+
+    async function verificarMudancas() {
+      if (verificando || atualizandoHtml) return;
+      if (document.hidden) return;
+
+      verificando = true;
+
+      try {
+        const resposta = await fetch(signatureEndpoint, {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        });
+
+        if (resposta.status === 401) return;
+        if (!resposta.ok) return;
+
+        const dados = await resposta.json();
+
+        if (!dados.ok || !dados.signature) return;
+
+        if (!assinaturaAtual) {
+          assinaturaAtual = dados.signature;
+          return;
+        }
+
+        if (dados.signature !== assinaturaAtual) {
+          assinaturaAtual = dados.signature;
+
+          await atualizarHtmlDaPagina();
+
+          if (window.Swal) {
+            Swal.fire({
+              toast: true,
+              position: "top-end",
+              icon: "info",
+              title: "Suas reservas foram atualizadas.",
+              showConfirmButton: false,
+              timer: 1800,
+              timerProgressBar: true
+            });
+          }
+        }
+
+      } catch (erro) {
+        console.warn("Falha ao verificar mudanças nas reservas:", erro);
+      } finally {
+        verificando = false;
+      }
+    }
+
+    setTimeout(verificarMudancas, 2000);
+    setInterval(verificarMudancas, 5000);
+  })();
+</script>
+</body>
+</html>

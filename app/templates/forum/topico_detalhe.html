@@ -1,0 +1,948 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topico.titulo }} • Fórum • LiteraWEB{% endblock %}
+
+{% block content %}
+{% from "_macros/avatar.html" import avatar_usuario %}
+
+{% set eh_meu_autor = session.get('usuario_id') and topico.autor and topico.autor.id == session.get('usuario_id') %}
+{% set autor_apagado = topico.autor and ((topico.autor.status or '')|lower == 'apagado') %}
+{% set topico_aberto_para_interacoes = (not topico.excluido) and (not topico_interacoes_bloqueadas) and (not topico.trancado or pode_moderar) %}
+
+<div class="grid gap-5 lg:grid-cols-12">
+  <!-- COLUNA PRINCIPAL -->
+  <div class="lg:col-span-8 space-y-5">
+
+    <section data-topic-section class="rounded-3xl border border-slate-200/70 bg-white/80 backdrop-blur shadow-soft overflow-hidden">
+      <div class="p-5 md:p-6">
+        <!-- Breadcrumb / topo -->
+        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+          <a href="{{ url_for('forum.lista_topicos') }}" class="hover:text-sky-700">Fórum</a>
+          <span>›</span>
+          {% if topico.livro %}
+            <a href="{{ url_for('forum.lista_topicos', livro_id=topico.livro.id) }}" class="hover:text-sky-700">
+              {{ topico.livro.titulo }}
+            </a>
+            <span>›</span>
+          {% endif %}
+          <span class="text-slate-700 font-extrabold">Tópico</span>
+        </div>
+
+        <!-- Badges -->
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          {% if topico.fixado %}
+            <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-extrabold text-amber-700">📌 Fixado</span>
+          {% endif %}
+          {% if topico.trancado %}
+            <span class="rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-700">🔒 Trancado</span>
+          {% endif %}
+          {% if topico.oculto and (pode_moderar or autor_do_topico) and not topico.excluido %}
+            <span class="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-extrabold text-rose-700">🙈 Oculto</span>
+          {% endif %}
+          {% if topico.excluido and (pode_moderar or autor_do_topico) %}
+            <span class="rounded-full border border-rose-300 bg-rose-100 px-2.5 py-1 text-[11px] font-extrabold text-rose-800">🗑️ Excluído</span>
+          {% endif %}
+          {% if topico.livro %}
+            <span class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-extrabold text-sky-700">
+              📚 {{ topico.livro.titulo }}
+            </span>
+          {% else %}
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+              Discussão geral
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Avisos -->
+        {% if topico.excluido and pode_moderar %}
+          <div class="mt-4 rounded-2xl border border-rose-300 bg-rose-50/90 p-4">
+            <div class="text-sm font-extrabold text-rose-800">🛡️ Tópico excluído pela moderação</div>
+            <div class="mt-1 text-sm font-semibold text-rose-700">
+              Este tópico saiu da área pública e está visível aqui apenas para a moderação.
+            </div>
+            {% if topico.motivo_exclusao %}
+              <div class="mt-2 text-sm font-semibold text-rose-800">
+                Motivo: {{ topico.motivo_exclusao }}
+              </div>
+            {% endif %}
+          </div>
+        {% elif topico.excluido and autor_do_topico and not pode_moderar %}
+          <div class="mt-4 rounded-2xl border border-rose-200 bg-rose-50/90 p-4">
+            <div class="text-sm font-extrabold text-rose-800">🗑️ Este tópico foi excluído</div>
+            <div class="mt-1 text-sm font-semibold text-rose-700">
+              Ele não aparece mais na área pública.
+            </div>
+          </div>
+        {% elif topico.oculto and autor_do_topico and not pode_moderar %}
+          <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 p-4">
+            <div class="text-sm font-extrabold text-amber-800">🙈 Este tópico está oculto</div>
+            <div class="mt-1 text-sm font-semibold text-amber-700">
+              Ele está visível apenas para você e para a moderação.
+            </div>
+          </div>
+        {% elif topico.oculto and pode_moderar %}
+          <div class="mt-4 rounded-2xl border border-rose-200 bg-rose-50/90 p-4">
+            <div class="text-sm font-extrabold text-rose-800">🛡️ Tópico oculto</div>
+            <div class="mt-1 text-sm font-semibold text-rose-700">
+              Este tópico está oculto para usuários comuns, mas continua visível para a moderação.
+            </div>
+            {% if topico.motivo_ocultacao %}
+              <div class="mt-2 text-sm font-semibold text-rose-800">
+                Motivo: {{ topico.motivo_ocultacao }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <!-- Título -->
+        <h1 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+          {{ topico.titulo }}
+        </h1>
+
+        <!-- Meta -->
+        <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-slate-500">
+          {% if topico.autor and topico.autor.nome_usuario and (not autor_apagado or pode_moderar) %}
+            <a href="{{ url_for('forum.meus_topicos') if eh_meu_autor else url_for('forum.perfil_usuario', nome_usuario=topico.autor.nome_usuario) }}"
+               class="inline-flex items-center gap-2 hover:text-sky-700"
+               title="{{ 'Ver meu perfil' if eh_meu_autor else 'Ver perfil de ' ~ _nome_usuario(topico.autor) }}">
+              <div class="rounded-full transition hover:scale-[1.02] hover:ring-4 hover:ring-sky-100">
+                {{ avatar_usuario(topico.autor, size="h-10 w-10", rounded="rounded-full") }}
+              </div>
+              <span>👤 {{ _nome_usuario(topico.autor) }}</span>
+            </a>
+          {% else %}
+            <div class="inline-flex items-center gap-2">
+              <div class="rounded-full">
+                {% if topico.autor %}
+                  {{ avatar_usuario(topico.autor, size="h-10 w-10", rounded="rounded-full") }}
+                {% else %}
+                  {{ avatar_usuario(None, size="h-10 w-10", rounded="rounded-full") }}
+                {% endif %}
+              </div>
+              <span>👤 {{ _nome_usuario(topico.autor) }}</span>
+            </div>
+          {% endif %}
+
+          <span>🕒 {{ topico.criado_em|dtbr if topico.criado_em else '-' }}</span>
+
+          {% if topico.atualizado_em and topico.atualizado_em != topico.criado_em %}
+            <span>✏️ Atualizado em {{ topico.atualizado_em|dtbr }}</span>
+          {% endif %}
+
+          <span>💬 <span data-topic-comments-count>{{ topico.comentarios_count or 0 }}</span> comentário(s)</span>
+          <span>👁️ {{ topico.visualizacoes or 0 }} visualização(ões)</span>
+
+          <span data-topic-upvotes-meta data-singular="upvote" data-plural="upvotes">
+            ⬆️ <span data-topic-upvotes-meta-count>{{ topico.upvotes_count or 0 }}</span>
+            <span data-topic-upvotes-meta-label>
+              {{ 'upvote' if (topico.upvotes_count or 0) == 1 else 'upvotes' }}
+            </span>
+          </span>
+        </div>
+
+        <!-- Conteúdo -->
+        <div class="prose prose-slate max-w-none text-sm md:text-base font-semibold leading-relaxed text-slate-700 whitespace-pre-line break-words">{{- topico.conteudo|trim -}}</div>
+
+        <!-- Ações do tópico -->
+        <div class="mt-4 flex flex-wrap gap-2">
+          <a href="{{ url_for('forum.lista_topicos') }}"
+             class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+            ← Voltar ao fórum
+          </a>
+
+          {% if pode_moderar %}
+            <a href="{{ url_for('forum.painel_moderacao_forum') }}"
+               class="inline-flex items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-100">
+              🛡️ Painel de moderação
+            </a>
+          {% endif %}
+
+          {% if session.get("usuario_id")
+              and topico_aberto_para_interacoes
+              and (not topico.oculto or autor_do_topico or pode_moderar) %}
+            <form method="post"
+                  action="{{ url_for('forum.upvote_topico', topico_id=topico.id) }}"
+                  data-ajax-upvote-topic>
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <button
+                type="submit"
+                data-topic-upvote-btn
+                data-upvoted="{{ 'true' if topico_upvotado else 'false' }}"
+                class="inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-extrabold transition
+                       {% if topico_upvotado %}
+                         border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100
+                       {% else %}
+                         border-slate-200 bg-white text-slate-700 hover:bg-slate-50
+                       {% endif %}">
+                <span>⬆️</span>
+                <span data-topic-upvote-count>{{ topico.upvotes_count or 0 }}</span>
+              </button>
+            </form>
+          {% else %}
+            <span class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700">
+              ⬆️ {{ topico.upvotes_count or 0 }}
+            </span>
+          {% endif %}
+
+          {% if session.get("usuario_id")
+              and topico_aberto_para_interacoes
+              and (not topico.oculto or autor_do_topico or pode_moderar) %}
+            <a href="#comentar"
+               class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-4 py-2 text-sm font-extrabold text-white shadow hover:brightness-105">
+              Comentar
+            </a>
+          {% endif %}
+
+          {% if (autor_do_topico or pode_moderar)
+              and (not topico.excluido)
+              and (not topico.trancado or pode_moderar) %}
+            <a href="{{ url_for('forum.editar_topico', topico_id=topico.id) }}"
+               class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+              ✏️ Editar tópico
+            </a>
+          {% endif %}
+
+          {% if autor_do_topico and not pode_moderar and not topico.excluido and not topico.trancado %}
+            {% if topico.oculto %}
+              <form method="post"
+                    action="{{ url_for('forum.desocultar_meu_topico', topico_id=topico.id) }}"
+                    data-ajax-refresh>
+                <button type="submit"
+                        class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-extrabold text-emerald-700 hover:bg-emerald-100">
+                  👁️ Desocultar
+                </button>
+              </form>
+            {% else %}
+              <form method="post"
+                    action="{{ url_for('forum.ocultar_meu_topico', topico_id=topico.id) }}"
+                    data-confirm-delete
+                    data-confirm-title="Ocultar tópico?"
+                    data-confirm-message="O tópico ficará oculto para os demais usuários."
+                    data-confirm-button="Ocultar tópico">
+                <button type="submit"
+                        class="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-extrabold text-amber-700 hover:bg-amber-50">
+                  🙈 Ocultar
+                </button>
+              </form>
+            {% endif %}
+
+            <form method="post"
+                  action="{{ url_for('forum.excluir_meu_topico', topico_id=topico.id) }}"
+                  data-confirm-delete
+                  data-confirm-title="Excluir tópico?"
+                  data-confirm-message="Essa ação apagará o tópico. Não poderá ser desfeita."
+                  data-confirm-button="Excluir tópico">
+              <button type="submit"
+                      class="inline-flex items-center justify-center rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-extrabold text-rose-700 hover:bg-rose-50">
+                🗑️ Excluir
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+        {% if pode_moderar %}
+          <details class="mt-5 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4">
+            <summary class="cursor-pointer list-none flex items-center justify-between gap-3">
+              <span class="text-sm md:text-base font-extrabold text-indigo-900">🛡️ Ações de moderação</span>
+              <span class="rounded-full border border-indigo-200 bg-white px-3 py-1 text-[11px] font-extrabold text-indigo-700">
+                Funcionário
+              </span>
+            </summary>
+
+            <div class="mt-4 grid gap-3 md:grid-cols-2">
+              {% if not topico.excluido %}
+                {% if topico.oculto %}
+                  <form method="post"
+                        action="{{ url_for('forum.moderacao_desocultar_topico', topico_id=topico.id) }}"
+                        data-ajax-refresh
+                        class="rounded-2xl border border-emerald-200 bg-white p-3 space-y-3">
+                    <label class="block">
+                      <span class="block text-xs font-extrabold text-slate-600 mb-1">Motivo da restauração</span>
+                      <input type="text" name="motivo" required value="Restaurado pela moderação."
+                             class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-300">
+                    </label>
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-extrabold text-emerald-700 hover:bg-emerald-100">
+                      👁️ Desocultar tópico
+                    </button>
+                  </form>
+                {% else %}
+                  <form method="post"
+                        action="{{ url_for('forum.moderacao_ocultar_topico', topico_id=topico.id) }}"
+                        data-ajax-refresh
+                        class="rounded-2xl border border-amber-200 bg-white p-3 space-y-3">
+                    <label class="block">
+                      <span class="block text-xs font-extrabold text-slate-600 mb-1">Motivo da ocultação</span>
+                      <input type="text" name="motivo" required value=""
+                             class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-amber-100 focus:border-amber-300">
+                    </label>
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-extrabold text-amber-700 hover:bg-amber-100">
+                      🙈 Ocultar tópico
+                    </button>
+                  </form>
+                {% endif %}
+              {% endif %}
+
+              {% if topico.excluido %}
+                <form method="post"
+                      action="{{ url_for('forum.moderacao_restaurar_topico', topico_id=topico.id) }}"
+                      data-ajax-refresh
+                      class="rounded-2xl border border-emerald-200 bg-white p-3 space-y-3">
+                  <label class="block">
+                    <span class="block text-xs font-extrabold text-slate-600 mb-1">Motivo da restauração</span>
+                    <input type="text" name="motivo" required value="Restaurado pela moderação."
+                           class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-300">
+                  </label>
+                  <button type="submit"
+                          class="w-full inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-extrabold text-emerald-700 hover:bg-emerald-100">
+                    ♻️ Restaurar tópico
+                  </button>
+                </form>
+              {% else %}
+                <form method="post"
+                      action="{{ url_for('forum.moderacao_excluir_topico', topico_id=topico.id) }}"
+                      data-ajax-refresh
+                      data-confirm-delete
+                      data-confirm-title="Excluir tópico?"
+                      data-confirm-message="Excluir logicamente este tópico pela moderação?"
+                      data-confirm-button="Excluir tópico"
+                      class="rounded-2xl border border-rose-200 bg-white p-3 space-y-3">
+                  <label class="block">
+                    <span class="block text-xs font-extrabold text-slate-600 mb-1">Motivo da exclusão</span>
+                    <input type="text" name="motivo" required value=""
+                           class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-rose-100 focus:border-rose-300">
+                  </label>
+                  <button type="submit"
+                          class="w-full inline-flex items-center justify-center rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-extrabold text-rose-700 hover:bg-rose-100">
+                    🗑️ Excluir tópico
+                  </button>
+                </form>
+              {% endif %}
+
+              {% if not topico.excluido %}
+                {% if topico.trancado %}
+                  <form method="post"
+                        action="{{ url_for('forum.moderacao_destrancar_topico', topico_id=topico.id) }}"
+                        data-ajax-refresh
+                        class="rounded-2xl border border-slate-300 bg-white p-3 space-y-3">
+                    <label class="block">
+                      <span class="block text-xs font-extrabold text-slate-600 mb-1">Motivo do destrancamento</span>
+                      <input type="text" name="motivo" required value="Destrancado pela moderação."
+                             class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-300">
+                    </label>
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-100">
+                      🔓 Destrancar tópico
+                    </button>
+                  </form>
+                {% else %}
+                  <form method="post"
+                        action="{{ url_for('forum.moderacao_trancar_topico', topico_id=topico.id) }}"
+                        data-ajax-refresh
+                        class="rounded-2xl border border-slate-300 bg-white p-3 space-y-3">
+                    <label class="block">
+                      <span class="block text-xs font-extrabold text-slate-600 mb-1">Motivo do trancamento</span>
+                      <input type="text" name="motivo" required value=""
+                             class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-300">
+                    </label>
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-100">
+                      🔒 Trancar tópico
+                    </button>
+                  </form>
+                {% endif %}
+
+                <form method="post"
+                      action="{{ url_for('forum.moderacao_toggle_fixar', topico_id=topico.id) }}"
+                      data-ajax-refresh
+                      class="rounded-2xl border border-amber-200 bg-white p-3 space-y-3">
+                  <label class="block">
+                    <span class="block text-xs font-extrabold text-slate-600 mb-1">
+                      Motivo de {% if topico.fixado %}desafixar{% else %}fixar{% endif %}
+                    </span>
+                    <input type="text" name="motivo" required
+                           value="{% if topico.fixado %}Desafixado pela moderação.{% else %}Fixado pela moderação.{% endif %}"
+                           class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-amber-100 focus:border-amber-300">
+                  </label>
+                  <button type="submit"
+                          class="w-full inline-flex items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-extrabold text-amber-700 hover:bg-amber-100">
+                    {% if topico.fixado %}📍 Desafixar tópico{% else %}📌 Fixar tópico{% endif %}
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </details>
+        {% endif %}
+      </div>
+    </section>
+
+    <div data-locked-wrap>
+      {% if topico.trancado %}
+        <section class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+          <div class="text-sm font-extrabold text-amber-800">🔒 Este tópico está trancado</div>
+          <div class="mt-1 text-sm font-semibold text-amber-700">
+            Novos comentários, respostas, edições, reações, upvotes e exclusões ficam desativados{% if pode_moderar %}, mas você (moderação) ainda pode gerenciar o conteúdo{% endif %}.
+          </div>
+        </section>
+      {% endif %}
+    </div>
+
+    <!-- Form comentário -->
+    <section id="comentar" data-comment-composer class="rounded-3xl border border-slate-200/70 bg-white/80 backdrop-blur shadow-soft p-4 md:p-5">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-lg font-extrabold tracking-tight text-slate-900">Comentários</h2>
+        <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-extrabold text-slate-600">
+          <span data-topic-comments-count>{{ topico.comentarios_count or 0 }}</span> comentário(s)
+        </span>
+      </div>
+
+      {% if topico.excluido and (pode_moderar or autor_do_topico) %}
+        <div class="mt-4 rounded-2xl border border-rose-200 bg-rose-50/80 p-4">
+          <p class="text-sm font-semibold text-rose-700">
+            Este tópico está excluído. Comentários e novas respostas ficam indisponíveis até a restauração.
+          </p>
+        </div>
+      {% elif topico_interacoes_bloqueadas %}
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+          <p class="text-sm font-semibold text-slate-600">
+            Interações desativadas: o autor deste tópico foi removido.
+          </p>
+        </div>
+      {% elif session.get("usuario_id") %}
+        {% if not topico.trancado or pode_moderar %}
+          <form method="post"
+                action="{{ url_for('forum.comentar_topico', topico_id=topico.id) }}"
+                class="mt-4"
+                data-ajax-create-comment>
+            <label for="novo-comentario" class="sr-only">Escreva um comentário</label>
+            <textarea id="novo-comentario"
+                      name="conteudo"
+                      rows="4"
+                      required
+                      placeholder="Escreva seu comentário..."
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"></textarea>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button type="submit"
+                      class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-4 py-2.5 text-sm font-extrabold text-white shadow hover:brightness-105">
+                Publicar comentário
+              </button>
+            </div>
+          </form>
+        {% endif %}
+      {% elif not session.get("funcionario_id") %}
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+          <p class="text-sm font-semibold text-slate-600">
+            Faça login para comentar nesta discussão.
+          </p>
+          <div class="mt-3 flex gap-2">
+            <a href="{{ url_for('auth.login') }}"
+               class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-4 py-2 text-sm font-extrabold text-white shadow hover:brightness-105">
+              Entrar
+            </a>
+            <a href="{{ url_for('auth.cadastro') }}"
+               class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+              Criar conta
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Lista de comentários -->
+    <section data-comments-section class="space-y-4">
+      {% if comentarios_raiz %}
+        <div class="space-y-4">
+          {% for c in comentarios_raiz recursive %}
+            {% set replies = comentarios_por_parent.get(c.id, []) %}
+            {% set comentario_excluido = c.oculto %}
+            {% set tem_respostas = replies|length > 0 %}
+            {% set removido = comentario_excluido and (not pode_moderar) %}
+            {% set deve_mostrar_comentario = (not comentario_excluido) or pode_moderar or tem_respostas %}
+            {% set minha_reacao = minha_reacao_por_comentario.get(c.id) %}
+            {% set reacoes_outros = reacoes_outros_por_comentario.get(c.id, []) %}
+            {% set comentario_autor_apagado = c.autor and ((c.autor.status or '')|lower == 'apagado') %}
+            {% set comentario_interacoes_bloqueadas = c.id in comentarios_interacoes_bloqueadas_ids %}
+            {% set pode_interagir_no_comentario = (not removido)
+                and (not comentario_excluido)
+                and (not topico.excluido)
+                and (not topico_interacoes_bloqueadas)
+                and (not comentario_interacoes_bloqueadas)
+                and (not topico.trancado or pode_moderar) %}
+
+            {% if deve_mostrar_comentario %}
+              <article id="comentario-{{ c.id }}"
+                       class="comment rounded-2xl border backdrop-blur shadow-soft overflow-visible scroll-mt-24
+                              {% if comentario_excluido and pode_moderar %}
+                                border-rose-200 bg-rose-50/70
+                              {% else %}
+                                border-slate-200/70 bg-white/85
+                              {% endif %}">
+                <div class="p-4">
+                  <div class="flex flex-col md:flex-row md:items-start gap-3">
+                    <div class="shrink-0">
+                      {% if removido %}
+                        {% if loop.depth0 == 0 %}
+                          {{ avatar_usuario(None, size="h-10 w-10", rounded="rounded-2xl") }}
+                        {% else %}
+                          {{ avatar_usuario(None, size="h-9 w-9", rounded="rounded-xl") }}
+                        {% endif %}
+                      {% else %}
+                        {% if c.autor and c.autor.nome_usuario and (not comentario_autor_apagado or pode_moderar) %}
+                          <a href="{{ url_for('forum.perfil_usuario', nome_usuario=c.autor.nome_usuario) }}"
+                             class="group inline-block"
+                             title="Ver perfil de {{ _nome_usuario(c.autor) }}">
+                            <div class="transition group-hover:scale-[1.02] group-hover:ring-4 group-hover:ring-sky-100 rounded-full">
+                              {% if loop.depth0 == 0 %}
+                                {{ avatar_usuario(c.autor, size="h-10 w-10", rounded="rounded-2xl") }}
+                              {% else %}
+                                {{ avatar_usuario(c.autor, size="h-9 w-9", rounded="rounded-xl") }}
+                              {% endif %}
+                            </div>
+                          </a>
+                        {% else %}
+                          {% if loop.depth0 == 0 %}
+                            {% if c.autor %}
+                              {{ avatar_usuario(c.autor, size="h-10 w-10", rounded="rounded-2xl") }}
+                            {% else %}
+                              {{ avatar_usuario(None, size="h-10 w-10", rounded="rounded-2xl") }}
+                            {% endif %}
+                          {% else %}
+                            {% if c.autor %}
+                              {{ avatar_usuario(c.autor, size="h-9 w-9", rounded="rounded-xl") }}
+                            {% else %}
+                              {{ avatar_usuario(None, size="h-9 w-9", rounded="rounded-xl") }}
+                            {% endif %}
+                          {% endif %}
+                        {% endif %}
+                      {% endif %}
+                    </div>
+
+                    <div class="min-w-0 flex-1">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <div class="text-sm font-extrabold text-slate-900">
+                          {% if comentario_excluido and pode_moderar %}
+                            <button type="button"
+                                    data-deleted-comment-toggle="{{ c.id }}"
+                                    aria-expanded="false"
+                                    title="Comentário excluído. Clique para revelar ou ocultar o conteúdo original."
+                                    class="inline-flex items-center gap-1 rounded-lg px-1 text-rose-800 underline decoration-dotted underline-offset-4 hover:text-rose-900">
+                              🗑️ {{ _nome_usuario(c.autor) }}
+                            </button>
+                          {% elif removido %}
+                            [removido]
+                          {% else %}
+                            {% if c.autor and c.autor.nome_usuario and (not comentario_autor_apagado or pode_moderar) %}
+                              <a href="{{ url_for('forum.perfil_usuario', nome_usuario=c.autor.nome_usuario) }}"
+                                 class="hover:text-sky-700">
+                                {{ _nome_usuario(c.autor) }}
+                              </a>
+                            {% else %}
+                              {{ _nome_usuario(c.autor) }}
+                            {% endif %}
+                          {% endif %}
+                        </div>
+
+                        {% if c.parent_id %}
+                          <span class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-extrabold text-sky-700">
+                            resposta
+                          </span>
+                        {% endif %}
+
+                        {% if comentario_excluido and pode_moderar %}
+                          <span class="rounded-full border border-rose-300 bg-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-rose-800">
+                            🛡️ excluído
+                          </span>
+                        {% endif %}
+
+                        <span class="text-xs font-semibold text-slate-500">•</span>
+                        <div class="text-xs font-semibold text-slate-500">{{ c.criado_em|dtbr if c.criado_em else '-' }}</div>
+
+                        {% if c.atualizado_em and c.atualizado_em != c.criado_em %}
+                          <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-extrabold text-slate-600">
+                            editado
+                          </span>
+                        {% endif %}
+                      </div>
+
+                      {% if comentario_excluido and pode_moderar %}
+                        <button type="button"
+                                data-deleted-comment-toggle="{{ c.id }}"
+                                aria-expanded="false"
+                                title="Comentário excluído. Clique para revelar ou ocultar o conteúdo original."
+                                class="mt-2 block w-full rounded-xl border border-rose-200 bg-white/80 px-3 py-2 text-left text-sm font-semibold text-rose-700 italic hover:bg-rose-50">
+                          Comentário excluído. Clique para ver o conteúdo original.
+                        </button>
+
+                        <div data-deleted-comment-content="{{ c.id }}"
+                             class="hidden mt-2 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 leading-relaxed whitespace-pre-line break-words"
+                             data-text-view="c-{{ c.id }}">{{- c.conteudo|trim -}}</div>
+                      {% elif removido %}
+                        <div class="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-500 italic">
+                          Comentário removido.
+                        </div>
+                      {% else %}
+                        <div class="mt-2 text-sm font-semibold text-slate-700 leading-relaxed whitespace-pre-line break-words" data-text-view="c-{{ c.id }}">{{- c.conteudo|trim -}}</div>
+                      {% endif %}
+
+                      <div class="mt-3 flex flex-wrap items-center gap-2" data-comment-actions="{{ c.id }}">
+
+                        {% if session.get("usuario_id") and pode_interagir_no_comentario %}
+                          <form method="post"
+                                action="{{ url_for('forum.upvote_comentario', comentario_id=c.id) }}"
+                                data-ajax-upvote-comment
+                                data-comment-id="{{ c.id }}">
+                            <input type="hidden" name="next" value="{{ request.path }}#comentario-{{ c.id }}">
+                            <button
+                              type="submit"
+                              data-comment-upvote-btn
+                              data-upvoted="{{ 'true' if c.id in comentarios_upvotados_ids else 'false' }}"
+                              class="inline-flex items-center justify-center rounded-xl border px-3 py-1.5 text-xs font-extrabold transition
+                                     {% if c.id in comentarios_upvotados_ids %}
+                                       border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100
+                                     {% else %}
+                                       border-slate-200 bg-white text-slate-700 hover:bg-slate-50
+                                     {% endif %}">
+                              <span>⬆️</span>
+                              <span data-comment-upvote-count>{{ c.upvotes_count or 0 }}</span>
+                            </button>
+                          </form>
+                        {% elif not removido %}
+                          <span class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-slate-700">
+                            ⬆️ {{ c.upvotes_count or 0 }}
+                          </span>
+                        {% endif %}
+
+                        <div class="inline-flex flex-wrap items-center gap-2"
+                             data-reactions-container="{{ c.id }}">
+                          {% if not removido and not comentario_excluido %}
+
+                            {% if minha_reacao %}
+                              {% if session.get("usuario_id") and pode_interagir_no_comentario %}
+                                <form method="post"
+                                      action="{{ url_for('forum.reagir_comentario', comentario_id=c.id) }}"
+                                      data-ajax-react-comment
+                                      data-comment-id="{{ c.id }}"
+                                      data-emoji="{{ minha_reacao }}">
+                                  <input type="hidden" name="emoji" value="{{ minha_reacao }}">
+                                  <input type="hidden" name="next" value="{{ request.path }}#comentario-{{ c.id }}">
+                                  <button
+                                    type="submit"
+                                    data-reaction-chip-btn
+                                    data-emoji="{{ minha_reacao }}"
+                                    data-mine="true"
+                                    class="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-xs font-extrabold text-sky-700 transition">
+                                    <span data-reaction-emoji>{{ minha_reacao }}</span>
+                                    <span>Você</span>
+                                  </button>
+                                </form>
+                              {% else %}
+                                <span class="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-extrabold text-sky-700">
+                                  <span>{{ minha_reacao }}</span>
+                                  <span>Você</span>
+                                </span>
+                              {% endif %}
+                            {% endif %}
+
+                            {% for r in reacoes_outros %}
+                              {% if session.get("usuario_id") and pode_interagir_no_comentario %}
+                                <form method="post"
+                                      action="{{ url_for('forum.reagir_comentario', comentario_id=c.id) }}"
+                                      data-ajax-react-comment
+                                      data-comment-id="{{ c.id }}"
+                                      data-emoji="{{ r.emoji }}">
+                                  <input type="hidden" name="emoji" value="{{ r.emoji }}">
+                                  <input type="hidden" name="next" value="{{ request.path }}#comentario-{{ c.id }}">
+                                  <button
+                                    type="submit"
+                                    data-reaction-chip-btn
+                                    data-emoji="{{ r.emoji }}"
+                                    data-mine="false"
+                                    class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-extrabold text-slate-700 transition hover:bg-slate-50">
+                                    <span data-reaction-emoji>{{ r.emoji }}</span>
+                                    <span data-reaction-count>{{ r.count }}</span>
+                                  </button>
+                                </form>
+                              {% else %}
+                                <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-extrabold text-slate-700">
+                                  <span>{{ r.emoji }}</span>
+                                  <span>{{ r.count }}</span>
+                                </span>
+                              {% endif %}
+                            {% endfor %}
+                          {% endif %}
+                        </div>
+
+                        {% if session.get("usuario_id") and pode_interagir_no_comentario %}
+                          <div class="relative inline-block">
+                            <button
+                              type="button"
+                              data-reaction-toggle="reaction-menu-{{ c.id }}"
+                              aria-expanded="false"
+                              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-extrabold text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-sky-700">
+                              +
+                            </button>
+
+                            <div
+                              id="reaction-menu-{{ c.id }}"
+                              data-reaction-menu
+                              class="hidden absolute left-0 top-full z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl md:left-full md:top-1/2 md:ml-2 md:mt-0 md:-translate-y-1/2"
+                              onclick="event.stopPropagation()">
+                              <div class="flex items-center gap-2 flex-nowrap">
+                                {% for emoji in emoji_options %}
+                                  <form method="post"
+                                        action="{{ url_for('forum.reagir_comentario', comentario_id=c.id) }}"
+                                        data-ajax-react-comment
+                                        data-comment-id="{{ c.id }}"
+                                        data-emoji="{{ emoji }}">
+                                    <input type="hidden" name="emoji" value="{{ emoji }}">
+                                    <input type="hidden" name="next" value="{{ request.path }}#comentario-{{ c.id }}">
+                                    <button
+                                      type="submit"
+                                      data-reaction-menu-btn
+                                      data-emoji="{{ emoji }}"
+                                      title="{% if emoji == minha_reacao %}Remover {{ emoji }}{% else %}Reagir com {{ emoji }}{% endif %}"
+                                      class="inline-flex h-10 w-10 items-center justify-center rounded-full border text-base font-extrabold transition
+                                             {% if emoji == minha_reacao %}
+                                               border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100
+                                             {% else %}
+                                               border-slate-200 bg-white text-slate-700 hover:bg-slate-50
+                                             {% endif %}">
+                                      {{ emoji }}
+                                    </button>
+                                  </form>
+                                {% endfor %}
+                              </div>
+                            </div>
+                          </div>
+                        {% endif %}
+
+                        {% if session.get("usuario_id") and pode_interagir_no_comentario %}
+                          <button type="button"
+                                  data-toggle-target="reply-form-{{ c.id }}"
+                                  class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                            Responder
+                          </button>
+                        {% endif %}
+
+                        {% if not c.oculto %}
+                          {% if session.get("usuario_id")
+                              and pode_interagir_no_comentario
+                              and (c.autor_id == session.get('usuario_id')) %}
+                            <button type="button"
+                                    data-toggle-target="edit-form-{{ c.id }}"
+                                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                              Editar
+                            </button>
+                          {% endif %}
+
+                          {% if not topico.excluido
+                              and (
+                                (session.get("usuario_id") and c.autor_id == session.get('usuario_id') and pode_interagir_no_comentario)
+                                or pode_moderar
+                              ) %}
+                            <form method="post"
+                                  action="{{ url_for('forum.excluir_comentario', comentario_id=c.id) }}"
+                                  data-ajax-refresh
+                                  data-after-hash="#comentario-{{ c.id }}"
+                                  data-confirm-delete
+                                  data-confirm-title="Excluir comentário?"
+                                  data-confirm-message="Essa ação não poderá ser desfeita."
+                                  data-confirm-button="Excluir">
+                              <button type="submit"
+                                      class="inline-flex items-center justify-center rounded-xl border border-rose-300 bg-white px-3 py-1.5 text-xs font-extrabold text-rose-700 hover:bg-rose-50">
+                                {% if pode_moderar and not (session.get("usuario_id") and c.autor_id == session.get('usuario_id')) %}
+                                  🛡️ Excluir (mod)
+                                {% else %}
+                                  🗑️ Excluir comentário
+                                {% endif %}
+                              </button>
+                            </form>
+                          {% endif %}
+                        {% endif %}
+                      </div>
+
+                      {% if session.get("usuario_id") and pode_interagir_no_comentario %}
+                        <div id="reply-form-{{ c.id }}" class="hidden mt-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+                          <form method="post"
+                                action="{{ url_for('forum.responder_comentario', comentario_id=c.id) }}"
+                                class="space-y-2"
+                                data-ajax-reply-comment
+                                data-parent-comment-id="{{ c.id }}">
+                            <label class="block text-xs font-extrabold text-slate-600">
+                              Responder {{ _nome_usuario(c.autor) }}
+                            </label>
+                            <textarea name="conteudo" rows="3" required placeholder="Escreva sua resposta..."
+                                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"></textarea>
+                            <div class="flex gap-2">
+                              <button type="submit"
+                                      class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-3 py-2 text-xs font-extrabold text-white shadow hover:brightness-105">
+                                Enviar resposta
+                              </button>
+                              <button type="button" data-toggle-target="reply-form-{{ c.id }}"
+                                      class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                                Cancelar
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      {% endif %}
+
+                      {% if (not c.oculto)
+                          and session.get("usuario_id")
+                          and pode_interagir_no_comentario
+                          and (c.autor_id == session.get('usuario_id')) %}
+                        <div id="edit-form-{{ c.id }}" class="hidden mt-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+                          <form method="post"
+                                action="{{ url_for('forum.editar_comentario', comentario_id=c.id) }}"
+                                class="space-y-2"
+                                data-ajax-edit-comment
+                                data-comment-id="{{ c.id }}">
+                            <input type="hidden" name="next" value="{{ request.path }}#comentario-{{ c.id }}">
+                            <label class="block text-xs font-extrabold text-slate-600">
+                              {% if c.parent_id %}Editar resposta{% else %}Editar comentário{% endif %}
+                            </label>
+
+                            <textarea name="conteudo" rows="3" required
+                                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300">{{ c.conteudo }}</textarea>
+
+                            <div class="flex gap-2">
+                              <button type="submit"
+                                      class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-3 py-2 text-xs font-extrabold text-white shadow hover:brightness-105">
+                                Salvar
+                              </button>
+
+                              <button type="button"
+                                      data-toggle-target="edit-form-{{ c.id }}"
+                                      class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                                Cancelar
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      {% endif %}
+
+                      {% if replies %}
+                        <div class="mt-4">
+                          <button type="button"
+                                  class="inline-flex items-center gap-2 text-xs font-extrabold text-slate-600 hover:text-slate-900"
+                                  data-thread-toggle
+                                  data-thread-target="replies-{{ c.id }}"
+                                  aria-expanded="false"
+                                  aria-controls="replies-{{ c.id }}">
+                            <span class="chev" aria-hidden="true">▸</span>
+                            <span>
+                              Ver {{ replies|length }} resposta{{ "s" if replies|length != 1 else "" }}
+                            </span>
+                          </button>
+                        </div>
+
+                        <div id="replies-{{ c.id }}"
+                             class="thread-replies hidden mt-3 space-y-3 pl-4 border-l-2 border-slate-100">
+                          {{ loop(replies) }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="rounded-2xl border border-slate-200 bg-white/85 p-8 text-center shadow-soft">
+          <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-100 text-2xl">
+            💭
+          </div>
+          <h3 class="mt-4 text-lg font-extrabold text-slate-900">Ainda não há comentários</h3>
+          <p class="mt-2 text-sm font-semibold text-slate-600">
+            Seja a primeira pessoa a participar desta discussão.
+          </p>
+          {% if session.get("usuario_id")
+              and topico_aberto_para_interacoes %}
+            <a href="#comentar"
+               class="mt-4 inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-4 py-2 text-sm font-extrabold text-white shadow hover:brightness-105">
+              Comentar agora
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="lg:col-span-4">
+    {% include "forum/_sidebar_forum.html" %}
+  </aside>
+</div>
+
+<div id="confirm-modal"
+     class="hidden fixed inset-0 z-[999]">
+  <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" data-confirm-close></div>
+
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+      <div class="p-6">
+        <div class="mb-4 flex items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600 text-xl">
+            ⚠️
+          </div>
+          <div>
+            <h3 id="confirm-modal-title" class="text-lg font-bold text-slate-900">
+              Confirmar ação
+            </h3>
+            <p id="confirm-modal-message" class="mt-1 text-sm text-slate-600">
+              Tem certeza?
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-6 flex items-center justify-end gap-3">
+          <button type="button"
+                  id="confirm-modal-cancel"
+                  class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            Cancelar
+          </button>
+
+          <button type="button"
+                  id="confirm-modal-confirm"
+                  class="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700">
+            Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/forum_topico.js') }}"></script>
+
+<script>
+  document.addEventListener("click", function (event) {
+    const trigger = event.target.closest("[data-deleted-comment-toggle]");
+    if (!trigger) return;
+
+    const commentId = trigger.getAttribute("data-deleted-comment-toggle");
+    const content = document.querySelector('[data-deleted-comment-content="' + commentId + '"]');
+
+    if (!content) return;
+
+    const shouldOpen = content.classList.contains("hidden");
+    content.classList.toggle("hidden", !shouldOpen);
+
+    document
+      .querySelectorAll('[data-deleted-comment-toggle="' + commentId + '"]')
+      .forEach(function (btn) {
+        btn.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+
+        if (btn.tagName === "BUTTON" && btn.classList.contains("block")) {
+          btn.textContent = shouldOpen
+            ? "Comentário excluído. Clique para ocultar o conteúdo original."
+            : "Comentário excluído. Clique para ver o conteúdo original.";
+        }
+      });
+  });
+</script>
+{% endblock %}

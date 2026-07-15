@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}LiteraWEB{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/notificacoes.css') }}">
+  {% block css %}{% endblock %}
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: "0 18px 45px rgba(10,15,25,.10)",
+          }
+        }
+      }
+    }
+  </script>
+
+  {% block head_extra %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}relative min-h-screen flex flex-col text-slate-900 bg-[#F5F3EF] overflow-x-hidden{% endblock %}">
+  {% block page_background %}
+    <!-- Fundo (glow) -->
+    <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10">
+      <div class="absolute -top-28 -left-28 h-96 w-96 rounded-full bg-sky-500/16 blur-3xl"></div>
+      <div class="absolute -top-24 -right-32 h-[28rem] w-[28rem] rounded-full bg-cyan-500/12 blur-3xl"></div>
+      <div class="absolute top-[45%] -left-24 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl"></div>
+      <div class="absolute bottom-[-6rem] right-[10%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-500/8 blur-3xl"></div>
+    </div>
+
+    <!-- Grain / texture -->
+    <div aria-hidden="true"
+         class="pointer-events-none fixed inset-0 z-0 opacity-[0.06] mix-blend-multiply"
+         style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 18px 18px;">
+    </div>
+  {% endblock %}
+
+  <!-- NAVBAR PADRÃO -->
+  {% include "_includes/navbar.html" %}
+
+  <!-- Conteúdo -->
+  <main class="container py-5 relative z-10 flex-1">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% if mensagens %}
+        <div class="space-y-2 mb-4">
+          {% for categoria, msg in mensagens %}
+            {% set cls = "border-slate-200 bg-slate-50 text-slate-800" %}
+            {% if categoria in ["success"] %}
+              {% set cls = "border-emerald-200 bg-emerald-50 text-emerald-800" %}
+            {% elif categoria in ["danger", "error"] %}
+              {% set cls = "border-rose-200 bg-rose-50 text-rose-800" %}
+            {% elif categoria in ["warning"] %}
+              {% set cls = "border-amber-200 bg-amber-50 text-amber-800" %}
+            {% endif %}
+            <div class="rounded-xl border px-4 py-3 text-sm font-semibold {{ cls }}">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER PADRÃO -->
+  {% include "_includes/footer.html" %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,431 @@
+:root{
+  --rp-primary: #2563eb;
+  --rp-primary-2: #1d4ed8;
+  --rp-accent: #06b6d4;
+  --rp-text: #0f172a;
+  --rp-muted: #64748b;
+  --rp-line: rgba(148, 163, 184, 0.22);
+  --rp-shadow: 0 22px 60px rgba(15, 23, 42, 0.16);
+  --rp-shadow-soft: 0 14px 35px rgba(37, 99, 235, 0.14);
+
+  --rp-success-bg: #ecfdf5;
+  --rp-success-text: #166534;
+  --rp-success-line: #bbf7d0;
+
+  --rp-error-bg: #fef2f2;
+  --rp-error-text: #b91c1c;
+  --rp-error-line: #fecaca;
+
+  --rp-info-bg: #eff6ff;
+  --rp-info-text: #1d4ed8;
+  --rp-info-line: #bfdbfe;
+
+  --rp-warning-bg: #fff7ed;
+  --rp-warning-text: #c2410c;
+  --rp-warning-line: #fed7aa;
+}
+
+.auth-reset-password{
+  position: relative;
+  min-height: 100vh;
+  padding: 32px 18px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.auth-reset-password::before,
+.auth-reset-password::after{
+  content: "";
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-reset-password::before{
+  width: 360px;
+  height: 360px;
+  top: 8%;
+  left: 6%;
+  background:
+    radial-gradient(circle, rgba(37,99,235,.20) 0%, rgba(37,99,235,0) 70%);
+}
+
+.auth-reset-password::after{
+  width: 420px;
+  height: 420px;
+  right: 4%;
+  bottom: 4%;
+  background:
+    radial-gradient(circle, rgba(6,182,212,.18) 0%, rgba(6,182,212,0) 72%);
+}
+
+.reset-password-card{
+  position: relative;
+  z-index: 1;
+  width: min(100%, 580px);
+  padding: 30px 28px 24px;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.88));
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: var(--rp-shadow);
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+}
+
+.reset-password-card::before{
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--rp-primary), var(--rp-accent));
+}
+
+.reset-password-hero{
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.reset-password-icon{
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 14px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background:
+    linear-gradient(135deg, var(--rp-primary), var(--rp-accent));
+  box-shadow: var(--rp-shadow-soft);
+}
+
+.reset-password-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: var(--rp-primary-2);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.reset-password-title{
+  margin-bottom: 10px !important;
+  color: var(--rp-text);
+  letter-spacing: -0.02em;
+}
+
+.reset-password-subtitle{
+  margin: 0 auto;
+  max-width: 430px;
+  color: var(--rp-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.reset-password-tags{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.reset-password-tag{
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid var(--rp-line);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.reset-password-form{
+  width: 100%;
+  max-width: 520px;
+  margin: 18px auto 0;
+}
+
+.reset-password-form .field{
+  margin-bottom: 18px;
+}
+
+.reset-password-form label{
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--rp-text);
+}
+
+.reset-password-form input{
+  width: 100%;
+  min-height: 52px;
+  padding: 0 15px;
+  border-radius: 15px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(255,255,255,.92);
+  color: var(--rp-text);
+  outline: none;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    transform .2s ease,
+    background .2s ease;
+}
+
+.reset-password-form input::placeholder{
+  color: #94a3b8;
+}
+
+.reset-password-form input:focus{
+  border-color: rgba(37, 99, 235, 0.48);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+  background: #fff;
+}
+
+.password-pro{
+  position: relative;
+}
+
+.password-pro input{
+  padding-right: 52px;
+}
+
+.pw-toggle-pro{
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+
+.pw-toggle-pro:hover{
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--rp-primary);
+}
+
+.field-help{
+  display: block;
+  margin-top: 9px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--rp-muted);
+}
+
+.password-meter{
+  width: 100%;
+  height: 8px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.16);
+  overflow: hidden;
+}
+
+.meter-bar{
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  transition: width .22s ease, background .22s ease;
+  background: #cbd5e1;
+}
+
+.meter-bar.strength-1{ background: #ef4444; }
+.meter-bar.strength-2{ background: #f97316; }
+.meter-bar.strength-3{ background: #eab308; }
+.meter-bar.strength-4{ background: #22c55e; }
+.meter-bar.strength-5{ background: #16a34a; }
+
+.password-strength{
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--rp-muted);
+}
+
+.match-status.ok{
+  color: #166534;
+}
+
+.match-status.error{
+  color: #b91c1c;
+}
+
+.reset-password-submit{
+  position: relative;
+  width: 100%;
+  min-height: 50px;
+  border-radius: 14px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    opacity .18s ease,
+    background .18s ease;
+}
+
+.reset-password-submit.is-active{
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.24);
+}
+
+.reset-password-submit.is-active:hover{
+  transform: translateY(-1px);
+}
+
+.reset-password-submit.is-loading{
+  pointer-events: none;
+  opacity: .95;
+}
+
+.reset-password-submit .btn-text{
+  transition: opacity .18s ease;
+}
+
+.reset-password-submit .btn-loader{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.42);
+  border-top-color: #fff;
+  opacity: 0;
+  animation: spinResetPassword .8s linear infinite;
+}
+
+.reset-password-submit.is-loading .btn-text{
+  opacity: 0;
+}
+
+.reset-password-submit.is-loading .btn-loader{
+  opacity: 1;
+}
+
+@keyframes spinResetPassword{
+  to{ transform: rotate(360deg); }
+}
+
+.reset-password-links{
+  margin-top: 16px;
+  text-align: center;
+}
+
+.reset-password-footer-note{
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.26);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--rp-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.footer-note-icon{
+  color: var(--rp-primary);
+  font-size: 14px;
+}
+
+.alert{
+  max-width: 520px;
+  margin: 14px auto 0;
+  padding: 13px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.alert-error,
+.alert-danger{
+  background: var(--rp-error-bg);
+  color: var(--rp-error-text);
+  border-color: var(--rp-error-line);
+}
+
+.alert-success{
+  background: var(--rp-success-bg);
+  color: var(--rp-success-text);
+  border-color: var(--rp-success-line);
+}
+
+.alert-info{
+  background: var(--rp-info-bg);
+  color: var(--rp-info-text);
+  border-color: var(--rp-info-line);
+}
+
+.alert-warning{
+  background: var(--rp-warning-bg);
+  color: var(--rp-warning-text);
+  border-color: var(--rp-warning-line);
+}
+
+@media (max-width: 640px){
+  .auth-reset-password{
+    padding: 18px 12px;
+  }
+
+  .reset-password-card{
+    width: min(100%, 100%);
+    padding: 22px 16px 18px;
+    border-radius: 22px;
+  }
+
+  .reset-password-icon{
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+  }
+
+  .reset-password-subtitle{
+    font-size: 13px;
+  }
+
+  .reset-password-tags{
+    gap: 6px;
+  }
+
+  .reset-password-tag{
+    font-size: 11px;
+    padding: 7px 10px;
+  }
+
+  .reset-password-form,
+  .alert{
+    max-width: 100%;
+  }
+
+  .reset-password-form input,
+  .reset-password-submit{
+    min-height: 50px;
+  }
+}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if modo == 'editar' %}Editar tópico • Fórum{% else %}Novo tópico • Fórum{% endif %} • LiteraWEB
+{% endblock %}
+
+{% block content %}
+{% set titulo_val = request.form.get('titulo', topico.titulo if topico else '') %}
+{% set conteudo_val = request.form.get('conteudo', topico.conteudo if topico else '') %}
+{% set livro_sel_form = request.form.get('livro_id') %}
+{% set livro_sel_id = (livro_sel_form if livro_sel_form is not none and livro_sel_form != '' else (topico.livro_id if topico else (livro_preselecionado.id if livro_preselecionado else ''))) %}
+
+<section class="rounded-3xl border border-slate-200/70 bg-white/70 backdrop-blur shadow-soft p-5 md:p-7">
+  <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+    <div>
+      <div class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-extrabold text-sky-700">
+        {% if modo == 'editar' %}✏️ Editando tópico{% else %}📝 Novo tópico{% endif %}
+      </div>
+      <h1 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+        {% if modo == 'editar' %}Editar discussão{% else %}Criar nova discussão{% endif %}
+      </h1>
+      <p class="mt-2 text-sm md:text-base text-slate-600 font-semibold">
+        {% if modo == 'editar' %}
+          Atualize título, livro vinculado e conteúdo da discussão.
+        {% else %}
+          Compartilhe uma dúvida, opinião, análise ou recomendação sobre livros.
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      {% if modo == 'editar' and topico %}
+        <a href="{{ url_for('forum.topico_detalhe', topico_id=topico.id, slug=topico.url_slug) }}"
+           class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+          Voltar ao tópico
+        </a>
+      {% else %}
+        <a href="{{ url_for('forum.lista_topicos') }}"
+           class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+          Voltar ao fórum
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<div class="mt-5 grid gap-5 lg:grid-cols-12">
+  <!-- Form principal -->
+  <section class="lg:col-span-8 rounded-3xl border border-slate-200/70 bg-white/80 backdrop-blur shadow-soft p-4 md:p-5">
+    <form method="post" class="space-y-4">
+      <div>
+        <label for="titulo" class="block text-sm font-extrabold text-slate-700 mb-2">Título do tópico</label>
+        <input id="titulo"
+               name="titulo"
+               type="text"
+               maxlength="180"
+               required
+               value="{{ titulo_val }}"
+               placeholder="Ex.: O final de tal livro fez sentido?"
+               class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300">
+        <p class="mt-1 text-xs font-semibold text-slate-500">
+          Seja claro e objetivo para ajudar outras pessoas a encontrarem sua discussão.
+        </p>
+      </div>
+
+      <div>
+        <label for="livro_id" class="block text-sm font-extrabold text-slate-700 mb-2">Livro vinculado (opcional)</label>
+        <select id="livro_id"
+                name="livro_id"
+                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300">
+          <option value="">Discussão geral (sem livro específico)</option>
+          {% for livro in livros %}
+            <option value="{{ livro.id }}" {{ 'selected' if (livro_sel_id|string) == (livro.id|string) else '' }}>
+              {{ livro.titulo }}{% if livro.autor %} — {{ livro.autor }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="conteudo" class="block text-sm font-extrabold text-slate-700 mb-2">Conteúdo</label>
+        <textarea id="conteudo"
+                  name="conteudo"
+                  rows="12"
+                  required
+                  placeholder="Escreva sua dúvida, opinião ou análise..."
+                  class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300">{{ conteudo_val }}</textarea>
+        <p class="mt-1 text-xs font-semibold text-slate-500">
+          Dica: explique o contexto e evite spoilers sem aviso (ou sinalize no título/conteúdo).
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 pt-2">
+        <button type="submit"
+                class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-5 py-2.5 text-sm font-extrabold text-white shadow hover:brightness-105">
+          {% if modo == 'editar' %}Salvar alterações{% else %}Publicar tópico{% endif %}
+        </button>
+
+        {% if modo == 'editar' and topico %}
+          <a href="{{ url_for('forum.topico_detalhe', topico_id=topico.id, slug=topico.url_slug) }}"
+             class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+            Cancelar
+          </a>
+        {% else %}
+          <a href="{{ url_for('forum.lista_topicos') }}"
+             class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+            Cancelar
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </section>
+
+  <!-- Sidebar -->
+  <aside class="lg:col-span-4 space-y-4">
+    <section class="rounded-2xl border border-slate-200/70 bg-white/80 backdrop-blur shadow-soft p-4">
+      <h2 class="text-sm font-extrabold text-slate-900">✨ Dicas para um bom tópico</h2>
+      <ul class="mt-3 space-y-2 text-sm font-semibold text-slate-600">
+        <li class="flex gap-2"><span>•</span><span>Use um título específico.</span></li>
+        <li class="flex gap-2"><span>•</span><span>Diga qual livro/autor está comentando.</span></li>
+        <li class="flex gap-2"><span>•</span><span>Evite spoilers no título.</span></li>
+        <li class="flex gap-2"><span>•</span><span>Se houver spoiler, avise no texto.</span></li>
+        <li class="flex gap-2"><span>•</span><span>Seja respeitoso com opiniões diferentes.</span></li>
+      </ul>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200/70 bg-white/80 backdrop-blur shadow-soft p-4">
+      <h2 class="text-sm font-extrabold text-slate-900">👤 Autor</h2>
+      <div class="mt-3 flex items-center gap-3">
+        {% set foto = session.get("usuario_foto") %}
+        {% if foto %}
+          <img src="{{ url_for('static', filename=foto) }}" alt="Sua foto"
+               class="h-11 w-11 rounded-2xl object-cover border border-slate-200">
+        {% else %}
+          <div class="h-11 w-11 rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 text-white grid place-items-center font-extrabold">
+            {{ (session.get('nome_usuario','U')[:1] | upper) }}
+          </div>
+        {% endif %}
+        <div class="min-w-0">
+          <div class="truncate text-sm font-extrabold text-slate-900">{{ session.get('nome_usuario', 'Usuário') }}</div>
+          <div class="text-xs font-semibold text-slate-500">Conta LiteraWEB</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200/70 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/70 shadow-soft p-4">
+      <h2 class="text-sm font-extrabold text-slate-900">📚 Integração com o acervo</h2>
+      <p class="mt-2 text-sm font-semibold text-slate-600 leading-relaxed">
+        Vincular o tópico a um livro facilita a busca e ajuda a concentrar as discussões da obra no mesmo lugar.
+      </p>
+      <div class="mt-3 text-xs font-semibold text-slate-500">
+        Você poderá filtrar tópicos por livro na página principal do fórum.
+      </div>
+    </section>
+
+    {% if modo == 'editar' and topico %}
+      <section class="rounded-2xl border border-rose-200 bg-rose-50/70 shadow-soft p-4">
+        <h2 class="text-sm font-extrabold text-rose-800">⚠️ Ações do tópico</h2>
+        <p class="mt-2 text-sm font-semibold text-rose-700">
+          Se precisar remover da visualização pública, você pode ocultar o tópico.
+        </p>
+        <form method="post" action="{{ url_for('forum.excluir_meu_topico', topico_id=topico.id) }}"
+              class="mt-3"
+              onsubmit="return confirm('Ocultar este tópico? Ele deixará de aparecer para usuários comuns.');">
+          <button type="submit"
+                  class="inline-flex items-center justify-center rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-extrabold text-rose-700 hover:bg-rose-100/40">
+            Ocultar tópico
+          </button>
+        </form>
+      </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

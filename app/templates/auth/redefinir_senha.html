@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redefinir senha • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/redefinir_senha.css') }}">
+</head>
+
+<body>
+  <main class="auth auth-reset-password">
+    <section class="card reset-password-card" aria-label="Tela de redefinição de senha">
+
+      <div class="reset-password-hero">
+        <div class="reset-password-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <path d="M12 14.8a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M6.8 10V8.6A5.2 5.2 0 0 1 12 3.4a5.2 5.2 0 0 1 5.2 5.2V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <rect x="4" y="10" width="16" height="10" rx="3" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </div>
+
+        <div class="reset-password-badge">Nova credencial</div>
+
+        <h1 class="title reset-password-title">Redefinir senha</h1>
+
+        <p class="reset-password-subtitle">
+          Crie uma nova senha para voltar a acessar sua conta com segurança no LiteraWEB.
+        </p>
+
+        <div class="reset-password-tags" aria-label="Informações importantes">
+          <span class="reset-password-tag">Acesso seguro</span>
+          <span class="reset-password-tag">Senha protegida</span>
+          <span class="reset-password-tag">Confirmação obrigatória</span>
+        </div>
+      </div>
+
+      {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category|lower }}" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form class="form reset-password-form" method="post" action="{{ url_for('auth.redefinir_senha', token=token) }}" id="resetPasswordForm">
+        <div class="field">
+          <label for="senha">Nova senha</label>
+
+          <div class="password password-pro">
+            <input
+              id="senha"
+              name="senha"
+              type="password"
+              placeholder="Digite sua nova senha"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            >
+
+            <button class="pw-toggle pw-toggle-pro" type="button" id="toggleSenha" aria-label="Mostrar ou ocultar senhas">
+              <svg id="eyeIcon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path id="eyePath"></path>
+              </svg>
+            </button>
+          </div>
+
+          <small class="field-help">
+            Use pelo menos 8 caracteres com letras, números e símbolos para maior segurança.
+          </small>
+
+          <div class="password-meter" aria-hidden="true">
+            <span class="meter-bar" id="meterBar"></span>
+          </div>
+          <small class="password-strength" id="passwordStrength">Força da senha: —</small>
+        </div>
+
+        <div class="field">
+          <label for="confirmar_senha">Confirmar nova senha</label>
+
+          <div class="password password-pro">
+            <input
+              id="confirmar_senha"
+              name="confirmar_senha"
+              type="password"
+              placeholder="Repita sua nova senha"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            >
+          </div>
+
+          <small class="field-help match-status" id="matchStatus">
+            Confirmação de senha: —
+          </small>
+        </div>
+
+        <button class="btn btn-submit reset-password-submit" id="btnSalvar" type="submit" disabled>
+          <span class="btn-text">Salvar nova senha</span>
+          <span class="btn-loader" aria-hidden="true"></span>
+        </button>
+
+        <div class="reset-password-links">
+          <a class="link-plain" href="{{ url_for('auth.login') }}">Voltar para o login</a>
+        </div>
+      </form>
+
+      <div class="reset-password-footer-note">
+        <span class="footer-note-icon" aria-hidden="true">✦</span>
+        Depois da redefinição, use sua nova senha para entrar normalmente no sistema.
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const senhaEl = document.getElementById("senha");
+    const confirmarEl = document.getElementById("confirmar_senha");
+    const btnSalvar = document.getElementById("btnSalvar");
+    const formEl = document.getElementById("resetPasswordForm");
+    const btnToggle = document.getElementById("toggleSenha");
+    const eyePath = document.getElementById("eyePath");
+    const meterBar = document.getElementById("meterBar");
+    const passwordStrength = document.getElementById("passwordStrength");
+    const matchStatus = document.getElementById("matchStatus");
+
+    const PATH_OPEN =
+      "M12 5c-5 0-9.3 3.1-11 7.5C2.7 16.9 7 20 12 20s9.3-3.1 11-7.5C21.3 8.1 17 5 12 5zm0 12c-2.5 0-4.5-2-4.5-4.5S9.5 8 12 8s4.5 2 4.5 4.5S14.5 17 12 17zm0-7.2c-1.5 0-2.7 1.2-2.7 2.7S10.5 15.2 12 15.2s2.7-1.2 2.7-2.7S13.5 9.8 12 9.8z";
+
+    const PATH_CLOSED =
+      "M2.1 3.5 3.5 2.1 21.9 20.5 20.5 21.9l-2.3-2.3c-1.8.9-3.9 1.4-6.2 1.4-5 0-9.3-3.1-11-7.5 1-2.5 2.8-4.6 5.1-5.9L2.1 3.5zm6.2 6.2c-.4.7-.6 1.5-.6 2.3 0 2.5 2 4.5 4.5 4.5.8 0 1.6-.2 2.3-.6l-1.4-1.4c-.3.1-.6.2-.9.2-1.5 0-2.7-1.2-2.7-2.7 0-.3.1-.6.2-.9L8.3 9.7zM12 5c2.3 0 4.4.5 6.2 1.4 2.3 1.3 4.1 3.4 5.1 5.9-.7 1.8-1.8 3.4-3.2 4.6l-2.2-2.2c.5-.7.8-1.6.8-2.5 0-2.5-2-4.5-4.5-4.5-.9 0-1.8.3-2.5.8L9.5 6.3C10.3 5.9 11.1 5 12 5z";
+
+    eyePath.setAttribute("d", PATH_OPEN);
+
+    btnToggle.addEventListener("click", () => {
+      const hide = senhaEl.type === "password";
+      senhaEl.type = hide ? "text" : "password";
+      confirmarEl.type = hide ? "text" : "password";
+      eyePath.setAttribute("d", hide ? PATH_CLOSED : PATH_OPEN);
+    });
+
+    function passwordScore(value){
+      let score = 0;
+      if (!value) return 0;
+      if (value.length >= 8) score++;
+      if (/[A-ZÀ-Ú]/.test(value)) score++;
+      if (/[a-zà-ú]/.test(value)) score++;
+      if (/\d/.test(value)) score++;
+      if (/[^A-Za-zÀ-Úà-ú0-9]/.test(value)) score++;
+      return Math.min(score, 5);
+    }
+
+    function updatePasswordMeter(){
+      const senha = senhaEl.value || "";
+      const score = passwordScore(senha);
+
+      meterBar.className = "meter-bar";
+      passwordStrength.textContent = "Força da senha: —";
+
+      if (!senha){
+        meterBar.style.width = "0%";
+        return;
+      }
+
+      const widths = ["18%", "35%", "55%", "78%", "100%"];
+      const labels = ["Muito fraca", "Fraca", "Média", "Boa", "Forte"];
+
+      meterBar.style.width = widths[Math.max(score - 1, 0)];
+      meterBar.classList.add(`strength-${score}`);
+      passwordStrength.textContent = `Força da senha: ${labels[Math.max(score - 1, 0)]}`;
+    }
+
+    function updateMatchStatus(){
+      const senha = senhaEl.value || "";
+      const confirmar = confirmarEl.value || "";
+
+      matchStatus.classList.remove("ok", "error");
+
+      if (!confirmar){
+        matchStatus.textContent = "Confirmação de senha: —";
+        return false;
+      }
+
+      if (senha === confirmar){
+        matchStatus.textContent = "Confirmação de senha: as senhas coincidem.";
+        matchStatus.classList.add("ok");
+        return true;
+      }
+
+      matchStatus.textContent = "Confirmação de senha: as senhas não coincidem.";
+      matchStatus.classList.add("error");
+      return false;
+    }
+
+    function updateButton(){
+      const senha = senhaEl.value || "";
+      const senhaOk = senha.length >= 8;
+      const matchOk = updateMatchStatus();
+
+      const canSubmit = senhaOk && matchOk;
+      btnSalvar.disabled = !canSubmit;
+      btnSalvar.classList.toggle("is-active", canSubmit);
+    }
+
+    senhaEl.addEventListener("input", () => {
+      updatePasswordMeter();
+      updateButton();
+    });
+
+    confirmarEl.addEventListener("input", updateButton);
+
+    formEl.addEventListener("submit", function(){
+      if (btnSalvar.disabled) return;
+      btnSalvar.classList.add("is-loading");
+      btnSalvar.disabled = true;
+    });
+
+    updatePasswordMeter();
+    updateButton();
+  </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% from "_macros/avatar.html" import avatar_usuario %}
+
+{% if solicitacoes_pendentes %}
+  {% for s in solicitacoes_pendentes %}
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0">
+          {% if s.seguidor and s.seguidor.nome_usuario %}
+            <a href="{{ url_for('forum.perfil_usuario', nome_usuario=s.seguidor.nome_usuario) }}"
+               class="block rounded-full transition hover:scale-[1.02] hover:ring-4 hover:ring-sky-100">
+              {{ avatar_usuario(s.seguidor, size="h-10 w-10", rounded="rounded-full") }}
+            </a>
+          {% else %}
+            {{ avatar_usuario(s.seguidor, size="h-10 w-10", rounded="rounded-full") }}
+          {% endif %}
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="text-sm font-extrabold text-slate-900">
+            {% if s.seguidor and s.seguidor.nome_usuario %}
+              <a href="{{ url_for('forum.perfil_usuario', nome_usuario=s.seguidor.nome_usuario) }}"
+                 class="hover:text-sky-700">
+                {{ _nome_usuario(s.seguidor) }}
+              </a>
+            {% else %}
+              {{ _nome_usuario(s.seguidor) }}
+            {% endif %}
+          </div>
+
+          <div class="mt-1 text-sm font-semibold leading-relaxed text-slate-600">
+            deseja seguir seu perfil no fórum.
+          </div>
+
+          <div class="mt-2 text-xs font-extrabold text-sky-700">
+            {{ s.criado_em|dtbr if s.criado_em else '-' }}
+          </div>
+
+          <div class="mt-3 flex flex-wrap gap-2">
+            <form method="post"
+                  action="{{ url_for('forum.aceitar_solicitacao_seguidor', relacao_id=s.id) }}"
+                  data-ajax-form>
+              <button type="submit"
+                      class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white hover:bg-emerald-700">
+                Aceitar
+              </button>
+            </form>
+
+            <form method="post"
+                  action="{{ url_for('forum.recusar_solicitacao_seguidor', relacao_id=s.id) }}"
+                  data-ajax-form>
+              <button type="submit"
+                      class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-extrabold text-rose-700 hover:bg-rose-100">
+                Recusar
+              </button>
+            </form>
+
+            {% if s.seguidor and s.seguidor.nome_usuario %}
+              <a href="{{ url_for('forum.perfil_usuario', nome_usuario=s.seguidor.nome_usuario) }}"
+                 class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                Ver perfil
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="rounded-2xl border border-slate-200 bg-white px-4 py-5 text-sm font-semibold text-slate-500">
+    Você não tem solicitações pendentes.
+  </div>
+{% endif %}

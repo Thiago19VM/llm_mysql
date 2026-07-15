@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Esqueci minha senha • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/esqueci_senha.css') }}">
+</head>
+
+<body>
+  <main class="auth auth-reset">
+    <section class="card reset-card" aria-label="Tela de recuperação de senha">
+
+      <div class="reset-hero">
+        <div class="reset-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <rect x="4" y="10" width="16" height="10" rx="3" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 14.2v2.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="reset-badge">Recuperação segura</div>
+
+        <h1 class="title reset-title">Esqueceu sua senha?</h1>
+
+        <p class="reset-subtitle">
+          Sem problemas. Informe seu e-mail e enviaremos um link seguro para você redefinir sua senha no LiteraWEB.
+        </p>
+
+        <div class="reset-tags" aria-label="Informações importantes">
+          <span class="reset-tag">Link temporário</span>
+          <span class="reset-tag">Acesso seguro</span>
+          <span class="reset-tag">Processo rápido</span>
+        </div>
+      </div>
+
+      {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category|lower }}" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form class="form reset-form" method="post" action="{{ url_for('auth.esqueci_senha') }}" id="resetForm">
+        <div class="field">
+          <label for="email">Digite o e-mail da sua conta</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value="{{ email|default('') }}"
+            autocomplete="email"
+            placeholder="seuemail@exemplo.com"
+            required
+          >
+          <small class="field-help">
+            Você receberá um link de redefinição neste endereço.
+          </small>
+        </div>
+
+        <button class="btn btn-submit reset-submit" id="btnEnviar" type="submit" disabled>
+          <span class="btn-text">Enviar link de recuperação</span>
+          <span class="btn-loader" aria-hidden="true"></span>
+        </button>
+
+        <div class="reset-links">
+          <a class="link-plain" href="{{ url_for('auth.login') }}">
+            Voltar para o login
+          </a>
+
+          <a class="link" href="{{ url_for('auth.cadastro') }}">
+            Ainda não tem uma conta?
+          </a>
+        </div>
+      </form>
+
+      <div class="reset-footer-note">
+        <span class="footer-note-icon" aria-hidden="true">✦</span>
+        Por segurança, o link enviado possui validade limitada.
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const emailEl = document.getElementById("email");
+    const btnEnviar = document.getElementById("btnEnviar");
+    const resetForm = document.getElementById("resetForm");
+
+    function isValidEmail(value){
+      const v = (value || "").trim();
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+
+    function updateButton(){
+      const canSend = isValidEmail(emailEl.value);
+      btnEnviar.disabled = !canSend;
+      btnEnviar.classList.toggle("is-active", canSend);
+    }
+
+    emailEl.addEventListener("input", updateButton);
+
+    resetForm.addEventListener("submit", function(){
+      if (btnEnviar.disabled) return;
+
+      btnEnviar.classList.add("is-loading");
+      btnEnviar.disabled = true;
+    });
+
+    updateButton();
+  </script>
+</body>
+</html>

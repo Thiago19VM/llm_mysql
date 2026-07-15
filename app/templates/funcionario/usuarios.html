@@ -1,0 +1,885 @@
+<!-- templates/funcionario/usuarios.html -->
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Usuários • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/livros.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/usuarios.css') }}">
+
+
+  <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
+</head>
+
+<body class="page-usuarios">
+  {# SweetAlert / alerts globais #}
+  {% include "_partials/alerts.html" %}
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
+    <div class="side-head">
+      <a class="brand" href="{{ url_for('funcionario.painel') }}">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}"
+        class="brand__logo">
+        <span class="brand__name">LiteraWEB</span>
+      </a>
+
+      <button class="icon-btn side-close" type="button" aria-label="Fechar menu" onclick="toggleSidebar(false)">
+        ✕
+      </button>
+    </div>
+
+    <nav class="side-nav" aria-label="Navegação do funcionário">
+      <a class="side-link {% if request.endpoint == 'funcionario.painel' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.painel') }}">
+        <span class="side-ico" aria-hidden="true">🏠</span>
+        <span>Painel de Controle</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.livros' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.livros') }}">
+        <span class="side-ico" aria-hidden="true">📚</span>
+        <span>Livros</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.reservas' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.reservas') }}">
+        <span class="side-ico" aria-hidden="true">🗓️</span>
+        <span>Reservas</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.usuarios' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.usuarios') }}">
+        <span class="side-ico" aria-hidden="true">👤</span>
+        <span>Usuários</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario_rag.painel_rag' %}is-active{% endif %}"
+           href="{{ url_for('funcionario_rag.painel_rag') }}">
+          <span class="side-ico" aria-hidden="true">🤖</span>
+          <span>Assistente Inteligente</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.politicas_emprestimo' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.politicas_emprestimo') }}">
+        <span class="side-ico" aria-hidden="true">🛡️</span>
+        <span>Políticas do Sistema</span>
+      </a>
+
+      <div class="side-sep"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-avatar" aria-hidden="true"></div>
+        <div class="side-user__meta">
+          <div class="side-user__name">{{ session.get("funcionario_nome", "Funcionário") }}</div>
+          <div class="side-user__role">Acesso interno</div>
+        </div>
+      </div>
+
+      <a class="side-logout" href="{{ url_for('auth.sair') }}">
+        <span aria-hidden="true">↩</span> Sair
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" aria-label="Abrir menu" onclick="toggleSidebar(true)">
+        ☰
+      </button>
+
+      <div class="welcome">
+        <div class="welcome__title">Usuários</div>
+        <div class="welcome__sub" id="pageClock">
+          {{ data_hoje }} • {{ hora_agora }}
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <a class="forum-btn" href="{{ url_for('forum.lista_topicos') }}">
+            <span class="forum-btn__ico" aria-hidden="true">💬</span>
+            <span>Ir para o Fórum</span>
+        </a>
+
+        <button class="user-pill" type="button" aria-label="Usuário logado">
+          <span class="user-pill__avatar" aria-hidden="true"></span>
+          <span class="user-pill__name">{{ session.get("funcionario_nome", "Funcionário") }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="content-inner">
+
+        {# ===== Cards métricas (SEM hyperlink) ===== #}
+        <section class="stats-grid" aria-label="Indicadores de usuários">
+          <div class="stat-card">
+            <div class="stat-label">Total de Usuários</div>
+            <div class="stat-value" id="statTotal">{{ stats.total if stats is defined else 0 }}</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Usuários On-line</div>
+            <div class="stat-value" id="statAtivos">{{ stats.ativos if stats is defined else 0 }}</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Usuários Off-line</div>
+            <div class="stat-value" id="statInativos">{{ stats.inativos if stats is defined else 0 }}</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Usuários bloqueados</div>
+            <div class="stat-value" id="statBloqueados">{{ stats.bloqueados if stats is defined else 0 }}</div>
+          </div>
+        </section>
+
+        <!-- Filtros -->
+        <section class="panel filters" aria-label="Filtros de usuários">
+          <form class="filters-grid filters-grid--users" method="get" action="{{ url_for('funcionario.usuarios') }}">
+            <input type="hidden" name="page" value="1">
+
+            <div class="f-group">
+              <label class="f-label" for="q">Nome</label>
+              <div class="f-input">
+                <span class="f-ico" aria-hidden="true">🔎</span>
+                <input id="q" name="q" type="text" placeholder="Procurar..." value="{{ request.args.get('q','') }}">
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="email">Email</label>
+              <div class="f-input">
+                <span class="f-ico" aria-hidden="true">✉️</span>
+                <input id="email" name="email" type="text" placeholder="ex: usuario@email.com" value="{{ request.args.get('email','') }}">
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="status">Status da conta</label>
+              <select id="status" name="status" class="f-select">
+                <option value="" {% if request.args.get('status','') == '' %}selected{% endif %}>Todos</option>
+                <option value="ativo" {% if request.args.get('status') == 'ativo' %}selected{% endif %}>Ativo</option>
+                <option value="inativo" {% if request.args.get('status') == 'inativo' %}selected{% endif %}>Inativo</option>
+                <option value="bloqueado" {% if request.args.get('status') == 'bloqueado' %}selected{% endif %}>Bloqueado</option>
+              </select>
+            </div>
+
+            <div class="f-actions">
+              <button class="btn-secondary" type="submit">Aplicar</button>
+              <a class="btn-ghost" href="{{ url_for('funcionario.usuarios') }}">Limpar</a>
+            </div>
+          </form>
+        </section>
+
+        <!-- Tabela -->
+        <section class="panel table-wrap" aria-label="Tabela de usuários">
+          {% set total = pag.total if pag is defined else 0 %}
+          {% set start = (pag.page - 1) * pag.per_page + 1 if (pag is defined and total > 0) else 0 %}
+          {% set end = (pag.page - 1) * pag.per_page + (usuarios|length) if (pag is defined and total > 0) else 0 %}
+
+          <div class="table-head">
+            <div class="table-title">Membros cadastrados</div>
+            <div class="table-meta">
+              Mostrando <strong>{{ start }}</strong>–<strong>{{ end }}</strong> de <strong>{{ total }}</strong> usuários
+            </div>
+          </div>
+
+          <div class="table-scroll" role="region" aria-label="Tabela de usuários (rolável)">
+            <table class="tbl tbl-users">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th style="width: 260px;">Email</th>
+                  <th style="width: 140px;">Membro desde</th>
+                  <th style="width: 170px;">Status</th>
+                  <th style="width: 110px;">Reservas</th>
+                  <th style="width: 90px;">Ações</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% if usuarios and usuarios|length > 0 %}
+                  {% for u in usuarios %}
+                    {% set nome = u.nome_usuario or u.nome or u.nome_completo or u.username or ("Usuário #" ~ u.id) %}
+                    {% set email_val = u.email or "-" %}
+
+                    {% set dt = (
+                      u.membro_desde if u.membro_desde is defined else
+                      (u.criado_em if u.criado_em is defined else
+                      (u.data_cadastro if u.data_cadastro is defined else none))
+                    ) %}
+
+                    {% set st_raw = (u.status if u.status is defined else (u.situacao if u.situacao is defined else "ativo")) %}
+                    {% set st_key = (st_raw|string)|lower %}
+
+                    {% if st_key in ["ativo","active"] %}
+                      {% set st_key = "ativo" %}
+                      {% set st_label = "Ativo" %}
+                      {% set st_class = "ok" %}
+                    {% elif st_key in ["bloqueado","blocked"] %}
+                      {% set st_key = "bloqueado" %}
+                      {% set st_label = "Bloqueado" %}
+                      {% set st_class = "bad" %}
+                    {% elif st_key in ["inativo","inactive"] %}
+                      {% set st_key = "inativo" %}
+                      {% set st_label = "Inativo" %}
+                      {% set st_class = "muted" %}
+                    {% else %}
+                      {% set st_label = (st_raw if st_raw else "-") %}
+                      {% set st_class = "muted" %}
+                    {% endif %}
+
+                    {% set reservas = (u.reservas_count if u.reservas_count is defined else (u.qtd_reservas if u.qtd_reservas is defined else 0)) %}
+
+                    <tr data-user-row="{{ u.id }}" data-status-key="{{ st_key }}" data-online="0">
+                      <td>
+                        <div class="u-cell">
+                          <div class="u-avatar">
+                            {% set foto = u.foto %}
+                            {% if foto %}
+                              <img
+                                src="{{ url_for('static', filename=foto) }}"
+                                alt="Foto de {{ nome }}"
+                                class="u-avatar__img"
+                              >
+                            {% else %}
+                              <div class="u-avatar__fallback">
+                                {{ nome[:1] | upper }}
+                              </div>
+                            {% endif %}
+                          </div>
+
+                          <div class="u-name">{{ nome }}</div>
+                        </div>
+                      </td>
+
+                      <td class="u-email">{{ email_val }}</td>
+
+                      <td>
+                        {% if dt %}
+                          {{ dt.strftime("%d/%m/%Y") }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+
+                      <td>
+                        <span class="badge {{ st_class }}" data-badge>{{ st_label }}</span>
+                        <span class="badge muted" data-presence-badge>Offline</span>
+                      </td>
+
+                      <td>
+                        <span class="u-count" title="Total de reservas do usuário">{{ reservas }}</span>
+                      </td>
+
+                      <td class="u-actions">
+                        <button
+                          type="button"
+                          class="gear-btn user-menu-btn"
+                          aria-label="Abrir ações do usuário"
+                          data-id="{{ u.id }}"
+                          data-nome="{{ nome|e }}"
+                          data-email="{{ email_val|e }}"
+                          data-status-key="{{ st_key }}"
+                          data-status-label="{{ st_label|e }}"
+                          data-url-detalhe="{{ url_for('funcionario.usuario_detalhes', usuario_id=u.id) }}"
+                          data-url-toggle="{{ url_for('funcionario.usuario_toggle_bloqueio', usuario_id=u.id) }}"
+                          data-url-apagar="{{ url_for('funcionario.usuario_apagar', usuario_id=u.id) }}"
+                        >
+                          ⚙
+                        </button>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr class="empty-row">
+                    <td colspan="6">
+                      <div class="empty">
+                        <div class="empty-ico" aria-hidden="true">👤</div>
+                        <div class="empty-title">Nenhum usuário encontrado</div>
+                        <div class="empty-sub">
+                          Ajuste os filtros ou verifique se já existem usuários cadastrados no banco.
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginação -->
+          <div class="pager">
+            <div class="pager-left">
+              Mostrando {{ start }}–{{ end }} de {{ total }} usuários
+            </div>
+
+            <div class="pager-right" aria-label="Paginação">
+              {% if pag is defined and pag.has_prev %}
+                <a class="pg-btn" href="{{ url_for('funcionario.usuarios', page=pag.prev_num, **args_no_page) }}">←</a>
+              {% else %}
+                <button class="pg-btn" type="button" disabled>←</button>
+              {% endif %}
+
+              {% if pages is defined and pages and pages[0] > 1 %}
+                <a class="pg-num" href="{{ url_for('funcionario.usuarios', page=1, **args_no_page) }}">1</a>
+                {% if pages[0] > 2 %}<span class="pg-ellipsis">…</span>{% endif %}
+              {% endif %}
+
+              {% if pages is defined %}
+                {% for p in pages %}
+                  {% if pag is defined and p == pag.page %}
+                    <button class="pg-num is-active" type="button">{{ p }}</button>
+                  {% else %}
+                    <a class="pg-num" href="{{ url_for('funcionario.usuarios', page=p, **args_no_page) }}">{{ p }}</a>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+
+              {% if pag is defined and pages is defined and pages and pages[-1] < pag.pages %}
+                {% if pages[-1] < pag.pages - 1 %}<span class="pg-ellipsis">…</span>{% endif %}
+                <a class="pg-num" href="{{ url_for('funcionario.usuarios', page=pag.pages, **args_no_page) }}">{{ pag.pages }}</a>
+              {% endif %}
+
+              {% if pag is defined and pag.has_next %}
+                <a class="pg-btn" href="{{ url_for('funcionario.usuarios', page=pag.next_num, **args_no_page) }}">→</a>
+              {% else %}
+                <button class="pg-btn" type="button" disabled>→</button>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Submenu (Ações do usuário - pequeno / fora do loop) -->
+  <div class="modal-backdrop" id="userBackdrop" aria-hidden="true"></div>
+
+  <section class="modal" id="userModal" role="dialog" aria-modal="true" aria-labelledby="userMenuTitle" aria-hidden="true">
+    <div class="modal-card modal-card--sm">
+      <div class="modal-head">
+        <h2 class="modal-title" id="userMenuTitle">Ações do usuário</h2>
+        <button class="icon-btn" type="button" aria-label="Fechar" id="btnCloseUserModal">✕</button>
+      </div>
+
+      <div class="user-menu-body">
+        <div class="user-menu-meta">
+          <div class="user-menu-name" id="menuUserName">—</div>
+          <div class="user-menu-sub" id="menuUserSub">—</div>
+        </div>
+
+        <div class="user-menu-actions">
+          <button class="action-btn" id="btnUserDetalhe" type="button">Ver detalhes</button>
+          <button class="action-btn" id="btnUserToggle" type="button">Bloquear</button>
+          <button class="action-btn action-btn--danger" id="btnUserDelete" type="button">Apagar usuário</button>
+        </div>
+
+        <small class="help" id="userHelp">
+          Ações aplicam mudanças no status do usuário e atualizam a tabela sem recarregar a página.
+        </small>
+      </div>
+    </div>
+  </section>
+
+  {# Modal grande (HTML) #}
+  {% include "funcionario/_usuario_detalhes_modal.html" %}
+
+  <!-- Backdrop mobile (sidebar) -->
+  <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+  {#  JS do modal grande (defer) #}
+  <script defer src="{{ url_for('static', filename='js/usuarios_detalhes.js') }}" data-ud-src="1"></script>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      // ===== Sidebar =====
+      const backdrop = document.getElementById("backdrop");
+
+      window.toggleSidebar = function(open){
+        document.body.classList.toggle("side-open", !!open);
+        if (backdrop) backdrop.style.display = open ? "block" : "none";
+      };
+
+      window.addEventListener("resize", () => {
+        if (window.innerWidth >= 980) {
+          if (backdrop) backdrop.style.display = "none";
+          document.body.classList.remove("side-open");
+        }
+      });
+
+      // ===== Relógio da topbar =====
+    function atualizarRelogioTopbar() {
+      const el = document.getElementById("pageClock");
+      if (!el) return;
+
+      const agora = new Date();
+
+      const data = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(agora);
+
+      const hora = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(agora);
+
+      el.textContent = `${data} • ${hora}`;
+    }
+
+    atualizarRelogioTopbar();
+
+      // ===== Helpers SweetAlert =====
+      function hasSwal(){
+        return typeof window.Swal !== "undefined";
+      }
+
+      function showSweetAlert({
+        icon = "info",
+        title = "Aviso",
+        text = "",
+        confirmButtonText = "OK"
+      } = {}){
+        if (hasSwal()){
+          return window.Swal.fire({
+            icon,
+            title,
+            text,
+            confirmButtonText
+          });
+        }
+
+        window.alert(text || title || "Aviso");
+        return Promise.resolve({ isConfirmed: true });
+      }
+
+      function showSweetConfirm({
+        icon = "warning",
+        title = "Confirmar ação",
+        text = "",
+        confirmButtonText = "Confirmar",
+        cancelButtonText = "Cancelar"
+      } = {}){
+        if (hasSwal()){
+          return window.Swal.fire({
+            icon,
+            title,
+            text,
+            showCancelButton: true,
+            confirmButtonText,
+            cancelButtonText,
+            reverseButtons: true,
+            focusCancel: true
+          });
+        }
+
+        return Promise.resolve({
+          isConfirmed: window.confirm(text || title || "Confirma esta ação?")
+        });
+      }
+
+      // ===== Modal (submenu pequeno) =====
+      const userModal = document.getElementById("userModal");
+      const userBackdrop = document.getElementById("userBackdrop");
+      const btnCloseUserModal = document.getElementById("btnCloseUserModal");
+
+      const menuUserName = document.getElementById("menuUserName");
+      const menuUserSub  = document.getElementById("menuUserSub");
+
+      const btnUserDetalhe = document.getElementById("btnUserDetalhe");
+      const btnUserToggle  = document.getElementById("btnUserToggle");
+      const btnUserDelete  = document.getElementById("btnUserDelete");
+
+      const statTotal      = document.getElementById("statTotal");
+      const statAtivos     = document.getElementById("statAtivos");
+      const statInativos   = document.getElementById("statInativos");
+      const statBloqueados = document.getElementById("statBloqueados");
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+
+      let current = {
+        id: null,
+        statusKey: "",
+        urlDetalhe: "",
+        urlToggle: "",
+        urlApagar: ""
+      };
+
+      function openUserModal(){
+        if (!userModal || !userBackdrop) return;
+        userModal.classList.add("is-open");
+        userBackdrop.classList.add("is-open");
+        userModal.setAttribute("aria-hidden", "false");
+        userBackdrop.setAttribute("aria-hidden", "false");
+        document.body.classList.add("modal-open");
+      }
+
+      function closeUserModal(){
+        if (!userModal || !userBackdrop) return;
+        userModal.classList.remove("is-open");
+        userBackdrop.classList.remove("is-open");
+        userModal.setAttribute("aria-hidden", "true");
+        userBackdrop.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+      }
+
+      function badgeInfo(statusKey){
+        if (statusKey === "ativo") return { label: "Ativo", cls: "ok" };
+        if (statusKey === "bloqueado") return { label: "Bloqueado", cls: "bad" };
+        if (statusKey === "inativo") return { label: "Inativo", cls: "muted" };
+        return { label: statusKey || "-", cls: "muted" };
+      }
+
+      function updateStatsUI(stats){
+        if (!stats) return;
+        if (statTotal) statTotal.textContent = stats.total ?? statTotal.textContent;
+        if (statAtivos) statAtivos.textContent = stats.ativos ?? statAtivos.textContent;
+        if (statInativos) statInativos.textContent = stats.inativos ?? statInativos.textContent;
+        if (statBloqueados) statBloqueados.textContent = stats.bloqueados ?? statBloqueados.textContent;
+      }
+
+      function updatePresenceUI(onlineMap){
+        document.querySelectorAll("[data-user-row]").forEach(row => {
+          const id = row.getAttribute("data-user-row");
+          const isOnline = !!onlineMap?.[String(id)];
+
+          row.dataset.online = isOnline ? "1" : "0";
+
+          const badge = row.querySelector("[data-presence-badge]");
+          if (!badge) return;
+
+          if (isOnline){
+            badge.textContent = "Online";
+            badge.classList.remove("muted","bad");
+            badge.classList.add("ok");
+          } else {
+            badge.textContent = "Offline";
+            badge.classList.remove("ok","bad");
+            badge.classList.add("muted");
+          }
+        });
+      }
+
+      function updateRowStatus(userId, statusKey){
+        const row = document.querySelector(`[data-user-row="${userId}"]`);
+        if (!row) return;
+
+        row.dataset.statusKey = statusKey;
+
+        const badge = row.querySelector("[data-badge]");
+        if (badge){
+          const info = badgeInfo(statusKey);
+          badge.textContent = info.label;
+          badge.classList.remove("ok","bad","muted");
+          badge.classList.add(info.cls);
+        }
+
+        const gear = row.querySelector(".user-menu-btn");
+        if (gear){
+          gear.dataset.statusKey = statusKey;
+          gear.dataset.statusLabel = badgeInfo(statusKey).label;
+        }
+      }
+
+      function removeUserRow(userId){
+        const row = document.querySelector(`[data-user-row="${userId}"]`);
+        if (row) row.remove();
+      }
+
+      function setModalButtonsByStatus(statusKey){
+        if (!btnUserToggle || !btnUserDelete) return;
+
+        if (statusKey === "bloqueado") {
+          btnUserToggle.textContent = "Desbloquear";
+          btnUserToggle.dataset.action = "unblock";
+        } else {
+          btnUserToggle.textContent = "Bloquear";
+          btnUserToggle.dataset.action = "block";
+        }
+
+        btnUserDelete.textContent = "Apagar usuário";
+        btnUserDelete.dataset.action = "delete";
+        btnUserDelete.classList.add("action-btn--danger");
+        btnUserDelete.disabled = false;
+      }
+
+      async function postJSON(url){
+        const headers = { "X-Requested-With": "XMLHttpRequest" };
+        if (csrfToken) headers["X-CSRFToken"] = csrfToken;
+
+        const res = await fetch(url, { method: "POST", headers });
+
+        let data = null;
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
+        if (ct.includes("application/json")) data = await res.json();
+
+        if (!res.ok || !data || !data.ok) {
+          const msg = (data && data.msg) ? data.msg : "Não foi possível concluir a ação.";
+          throw new Error(msg);
+        }
+        return data;
+      }
+
+      function setBusy(isBusy){
+        if (btnUserToggle){
+          btnUserToggle.disabled = isBusy;
+          btnUserToggle.classList.toggle("is-busy", isBusy);
+        }
+        if (btnUserDelete){
+          btnUserDelete.disabled = isBusy;
+          btnUserDelete.classList.toggle("is-busy", isBusy);
+        }
+      }
+
+
+      const userDetailsScriptSrc = "{{ url_for('static', filename='js/usuarios_detalhes.js') }}";
+
+      function waitFor(fn, timeoutMs = 3500){
+        return new Promise((resolve, reject) => {
+          const t0 = performance.now();
+          const tick = () => {
+            if (typeof fn === "function") return resolve(true);
+            if ((performance.now() - t0) > timeoutMs) return reject(new Error("Timeout aguardando openUserDetailsModal"));
+            requestAnimationFrame(tick);
+          };
+          tick();
+        });
+      }
+
+      async function ensureUserDetailsScriptLoaded(){
+        if (typeof window.openUserDetailsModal === "function") return true;
+
+        const existing =
+          document.querySelector('script[data-ud-src="1"]') ||
+          Array.from(document.scripts).find(s => (s.src || "").includes("usuarios_detalhes.js"));
+
+        if (existing){
+          await waitFor(window.openUserDetailsModal, 3500);
+          return true;
+        }
+
+        await new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = userDetailsScriptSrc + "?v=" + Date.now();
+          s.defer = true;
+          s.dataset.udDynamic = "1";
+          s.onload = resolve;
+          s.onerror = () => reject(new Error("Falha ao carregar usuarios_detalhes.js (404?)"));
+          document.head.appendChild(s);
+        });
+
+        await waitFor(window.openUserDetailsModal, 3500);
+        return true;
+      }
+
+      // Abre modal a partir da engrenagem
+      document.querySelectorAll(".user-menu-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const nome = btn.dataset.nome || "Usuário";
+          const email = btn.dataset.email || "";
+          const statusKey = btn.dataset.statusKey || "ativo";
+          const statusLabel = btn.dataset.statusLabel || "";
+
+          current.id = btn.dataset.id;
+          current.statusKey = statusKey;
+          current.urlDetalhe = btn.dataset.urlDetalhe || "";
+          current.urlToggle = btn.dataset.urlToggle || "";
+          current.urlApagar = btn.dataset.urlApagar || "";
+
+          if (menuUserName) menuUserName.textContent = nome;
+          if (menuUserSub) menuUserSub.textContent = [email, statusLabel].filter(Boolean).join(" • ");
+
+          if (btnUserDetalhe) btnUserDetalhe.dataset.url = current.urlDetalhe || "";
+
+          setModalButtonsByStatus(statusKey);
+          openUserModal();
+        });
+      });
+
+      // Ver detalhes
+      btnUserDetalhe?.addEventListener("click", async () => {
+        const url = btnUserDetalhe.dataset.url || "";
+        if (!url){
+          await showSweetAlert({
+            icon: "warning",
+            title: "Atenção",
+            text: "Não foi possível abrir: URL de detalhes vazia. Abra a engrenagem novamente."
+          });
+          return;
+        }
+
+        closeUserModal();
+
+        try{
+          await ensureUserDetailsScriptLoaded();
+
+          if (typeof window.openUserDetailsModal === "function"){
+            window.openUserDetailsModal(url);
+          } else {
+            window.location.href = url;
+          }
+        }catch(err){
+          console.error(err);
+          window.location.href = url;
+        }
+      });
+
+      // Bloquear / Desbloquear
+      btnUserToggle?.addEventListener("click", async () => {
+        if (!current.urlToggle || !current.id) return;
+
+        try{
+          setBusy(true);
+          const data = await postJSON(current.urlToggle);
+
+          current.statusKey = data.user?.status_key || current.statusKey;
+          updateRowStatus(current.id, current.statusKey);
+          setModalButtonsByStatus(current.statusKey);
+
+          const emailPart = ((menuUserSub?.textContent || "").split(" • ")[0] || "").trim();
+          if (menuUserSub) {
+            menuUserSub.textContent = [emailPart, badgeInfo(current.statusKey).label].filter(Boolean).join(" • ");
+          }
+
+          updateStatsUI(data.stats);
+          if (data.online) updatePresenceUI(data.online);
+        }catch(err){
+          await showSweetAlert({
+            icon: "error",
+            title: "Erro",
+            text: err.message || "Erro ao alterar status."
+          });
+        }finally{
+          setBusy(false);
+        }
+      });
+
+      // Apagar usuário
+      btnUserDelete?.addEventListener("click", async () => {
+        if (!current.id || !current.urlApagar) return;
+
+        const result = await showSweetConfirm({
+          icon: "warning",
+          title: "Apagar usuário?",
+          text: "Tem certeza que deseja apagar este usuário de forma segura?",
+          confirmButtonText: "Sim, apagar",
+          cancelButtonText: "Cancelar"
+        });
+
+        if (!result.isConfirmed) return;
+
+        try{
+          setBusy(true);
+          const data = await postJSON(current.urlApagar);
+
+          removeUserRow(current.id);
+          updateStatsUI(data.stats);
+          if (data.online) updatePresenceUI(data.online);
+
+          closeUserModal();
+
+          await showSweetAlert({
+            icon: "success",
+            title: "Usuário apagado",
+            text: data.msg || "Usuário apagado com sucesso."
+          });
+        }catch(err){
+          await showSweetAlert({
+            icon: "error",
+            title: "Erro",
+            text: err.message || "Erro ao apagar usuário."
+          });
+        }finally{
+          setBusy(false);
+        }
+      });
+
+      btnCloseUserModal?.addEventListener("click", closeUserModal);
+      userBackdrop?.addEventListener("click", closeUserModal);
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && userModal?.classList.contains("is-open")){
+          closeUserModal();
+        }
+      });
+
+      // ===== Auto refresh (cards + presença) =====
+      const statsUrl = "{{ url_for('funcionario.usuarios_stats') }}";
+      const presenceUrl = "{{ url_for('funcionario.usuarios_presenca') }}";
+
+      function getVisibleUserIds(){
+        return Array.from(document.querySelectorAll("[data-user-row]"))
+          .map(tr => tr.getAttribute("data-user-row"))
+          .filter(Boolean);
+      }
+
+      async function fetchStatsAndUpdate(){
+        try{
+          const res = await fetch(statsUrl, {
+            method: "GET",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+          });
+          const data = await res.json();
+          if (data && data.ok && data.stats){
+            updateStatsUI(data.stats);
+          }
+        }catch(e){
+          // silencioso
+        }
+      }
+
+      async function fetchPresenceAndUpdate(){
+        const ids = getVisibleUserIds();
+        if (!ids.length) return;
+
+        try{
+          const url = presenceUrl + "?ids=" + encodeURIComponent(ids.join(","));
+          const res = await fetch(url, {
+            method: "GET",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+          });
+          const data = await res.json();
+          if (data && data.ok && data.online){
+            updatePresenceUI(data.online);
+          }
+        }catch(e){
+          // silencioso
+        }
+      }
+
+      fetchStatsAndUpdate();
+      fetchPresenceAndUpdate();
+
+      setInterval(() => {
+        if (!document.hidden){
+           atualizarRelogioTopbar();
+           fetchStatsAndUpdate();
+           fetchPresenceAndUpdate();
+        }
+      }, 10000);
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden){
+          atualizarRelogioTopbar();
+          fetchStatsAndUpdate();
+          fetchPresenceAndUpdate();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

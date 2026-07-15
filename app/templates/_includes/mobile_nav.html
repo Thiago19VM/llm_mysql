@@ -1,0 +1,118 @@
+{% set ep = request.endpoint or '' %}
+{% set is_home = ep == 'main.home' %}
+{% set is_acervo = ep in ['main.acervo', 'main.livro_detalhe'] %}
+{% set is_quem = ep == 'main.quem_somos' %}
+{% set is_forum = ep.startswith('forum.') %}
+
+<div id="backdrop"
+     class="hidden fixed inset-0 z-40 bg-slate-950/40"
+     onclick="openMenu(false)"
+     aria-hidden="true">
+</div>
+
+<aside id="mnav"
+       class="glass-menu fixed z-50 right-4 top-16 w-[min(340px,calc(100vw-32px))] transition-transform duration-200 rounded-2xl border border-slate-200 p-3 shadow-soft"
+       style="transform: translateX(120%);"
+       aria-label="Menu mobile">
+  <div class="flex items-center justify-between px-2 py-2">
+    <div class="font-extrabold">Menu</div>
+    <button class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
+            type="button"
+            aria-label="Fechar menu"
+            onclick="openMenu(false)">
+      ✕
+    </button>
+  </div>
+
+  <a class="block px-3 py-3 rounded-xl font-extrabold {{ 'text-sky-700 bg-sky-50 ring-1 ring-sky-200' if is_home else 'text-slate-700 hover:bg-slate-100' }}"
+     href="{{ url_for('main.home') }}">
+    Início
+  </a>
+
+  <a class="block px-3 py-3 rounded-xl font-extrabold {{ 'text-sky-700 bg-sky-50 ring-1 ring-sky-200' if is_acervo else 'text-slate-700 hover:bg-slate-100' }}"
+     href="{{ url_for('main.acervo') }}">
+    Acervo
+  </a>
+
+  <a class="block px-3 py-3 rounded-xl font-extrabold {{ 'text-sky-700 bg-sky-50 ring-1 ring-sky-200' if is_quem else 'text-slate-700 hover:bg-slate-100' }}"
+     href="{{ url_for('main.quem_somos') }}">
+    Quem somos
+  </a>
+
+  <a class="block px-3 py-3 rounded-xl font-extrabold {{ 'text-sky-700 bg-sky-50 ring-1 ring-sky-200' if is_forum else 'text-slate-700 hover:bg-slate-100' }}"
+     href="{{ url_for('forum.lista_topicos') }}">
+    Fórum
+  </a>
+
+  <div class="my-2 h-px bg-slate-200"></div>
+
+  {% if session.get("funcionario_id") %}
+    <a class="block px-3 py-3 rounded-xl font-extrabold text-slate-700 hover:bg-slate-100"
+       href="{{ url_for('funcionario.painel') }}">
+      Painel funcionário
+    </a>
+
+    <a class="block px-3 py-3 rounded-xl font-extrabold text-slate-700 hover:bg-slate-100"
+       href="{{ url_for('forum.painel_moderacao_forum') }}">
+      Painel do Fórum
+    </a>
+
+    <a class="block px-3 py-3 rounded-xl font-extrabold text-rose-600 hover:bg-rose-50"
+       href="{{ url_for('auth.sair') }}">
+      Sair
+    </a>
+
+  {% elif session.get("usuario_id") %}
+    <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div class="flex items-center gap-3 px-3 py-3">
+        {% set foto = session.get("usuario_foto") %}
+        {% if foto %}
+          <img src="{{ url_for('static', filename=foto) }}"
+               alt="Foto de {{ session.get('nome_usuario','Usuário') }}"
+               class="h-10 w-10 rounded-2xl object-cover border border-slate-200"
+               loading="lazy"
+               decoding="async">
+        {% else %}
+          <div class="h-10 w-10 rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 text-white grid place-items-center font-extrabold">
+            {{ (session.get('nome_usuario','U')[:1] | upper) }}
+          </div>
+        {% endif %}
+
+        <div class="min-w-0">
+          <div class="max-w-[160px] truncate font-extrabold text-slate-800">
+            {{ session.get("nome_usuario", "Minha conta") }}
+          </div>
+          <div class="text-xs font-semibold text-slate-500 truncate">Conta</div>
+        </div>
+      </div>
+
+      <div class="h-px bg-slate-200"></div>
+
+      <a class="block px-3 py-3 font-extrabold text-slate-700 hover:bg-slate-100"
+         href="{{ url_for('main.perfil') }}">
+        Meu perfil
+      </a>
+
+      <a class="block px-3 py-3 font-extrabold text-slate-700 hover:bg-slate-100"
+         href="{{ url_for('main.minhas_reservas') }}">
+        Minhas reservas
+      </a>
+
+      <a class="block px-3 py-3 font-extrabold text-rose-600 hover:bg-rose-50"
+         href="{{ url_for('auth.sair') }}">
+        Sair
+      </a>
+    </div>
+
+  {% else %}
+    <a class="block px-3 py-3 rounded-xl font-extrabold text-slate-700 hover:bg-slate-100"
+       href="{{ url_for('auth.cadastro') }}">
+      Cadastre-se
+    </a>
+
+    <a class="block px-3 py-3 rounded-xl font-extrabold text-white bg-gradient-to-br from-sky-600 to-cyan-500 hover:brightness-105"
+       href="{{ url_for('auth.login') }}">
+      Entrar
+    </a>
+  {% endif %}
+</aside>

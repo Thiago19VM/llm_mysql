@@ -1,0 +1,979 @@
+/* =========================================================
+   1) BASE DA PÁGINA
+   ========================================================= */
+
+/* Centraliza o conteúdo principal dentro da área .app */
+.app .content{
+  width: 100%;
+  max-width: none;
+  display: flex;
+  justify-content: center;
+}
+
+/* Largura padrão do miolo da página */
+.app .content .content-inner{
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* Ajustes específicos da página de livros */
+.page-livros .app .content{
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.page-livros .app .content .content-inner{
+  width: 100%;
+  max-width: 1800px;
+}
+
+/* Cabeçalho da página */
+.page-head{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 10px 0 14px;
+}
+
+
+/* =========================================================
+   2) BOTÕES GERAIS
+   ========================================================= */
+
+/* Botões principais com gradiente */
+.btn-add,
+.btn-primary{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff;
+  text-decoration: none;
+  font-weight: 900;
+  font-size: 12px;
+  border: 1px solid rgba(31,111,185,.18);
+  box-shadow: 0 16px 35px rgba(31,111,185,.18);
+}
+
+.btn-add:hover,
+.btn-primary:hover{
+  filter: brightness(1.02);
+  cursor: pointer;
+}
+
+/* Botão secundário */
+.btn-secondary{
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-weight: 900;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover{
+  background: #f7faff;
+}
+
+/* Botão discreto / fantasma */
+.btn-ghost{
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 900;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover{
+  color: var(--text);
+  background: rgba(31,111,185,.08);
+  border-color: rgba(31,111,185,.18);
+}
+
+
+/* =========================================================
+   3) FILTROS
+   ========================================================= */
+
+.filters{
+  margin-top: 10px;
+  width: 100%;
+}
+
+/* Grid principal dos filtros no desktop */
+.page-livros .filters-grid{
+  display: grid;
+  gap: 14px;
+  align-items: end;
+  grid-template-columns: 2.2fr 1.2fr 0.9fr 1.1fr 1.2fr auto;
+}
+
+.page-livros .filters-grid > .f-group,
+.page-livros .filters-grid .f-input{
+  min-width: 0;
+  position: relative;
+  z-index: 5;
+}
+
+/* Grupo individual: label + campo */
+.f-group{
+  display: grid;
+  gap: 6px;
+}
+
+/* Label dos filtros */
+.f-label{
+  font-size: 11px;
+  font-weight: 950;
+  color: var(--muted);
+}
+
+/* Campo com slot para ícone */
+.f-input{
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Ícone do campo */
+.f-ico{
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+/* Input padrão dentro do campo com ícone */
+.f-input input{
+  grid-column: 2;
+  border: 0;
+  outline: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  width: 100%;
+}
+
+/* Variante sem ícone */
+.f-input.no-ico{
+  grid-template-columns: 1fr;
+}
+
+.f-input.no-ico input{
+  grid-column: 1;
+}
+
+/* Select padrão dos filtros */
+.f-select{
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  outline: 0;
+  pointer-events: auto;
+}
+
+/* Área dos botões de filtro */
+.page-livros .f-actions{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   4) CABEÇALHO DA TABELA E ABAS
+   ========================================================= */
+
+/* Container superior da tabela */
+.table-wrap{
+  width: 100%;
+  margin-top: 14px;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Cabeçalho padrão da tabela */
+.table-head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Variante do cabeçalho com abas */
+.table-head--tabs{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border-bottom: 1px solid #e7edf7;
+}
+
+/* Título da tabela */
+.table-title{
+  font-weight: 950;
+  font-size: 13px;
+  color: #233553;
+}
+
+/* Meta / contador da tabela */
+.table-meta{
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Grupo de abas */
+.table-tabs{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border-bottom: 0;
+  flex-wrap: wrap;
+}
+
+/* Botão de aba */
+.table-tab{
+  appearance: none;
+  border: 1px solid #dbe5f4;
+  background: linear-gradient(180deg, #f9fbff 0%, #f2f6fd 100%);
+  color: #35507a;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+.table-tab:hover{
+  transform: translateY(-1px);
+  border-color: #bfd2f0;
+  background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+}
+
+.table-tab.is-active{
+  color: #183b73;
+  border-color: #b8cdf2;
+  background: linear-gradient(180deg, #ffffff 0%, #edf4ff 100%);
+  box-shadow: 0 10px 24px rgba(74,111,179,.12);
+}
+
+/* Painel de aba escondido */
+.table-tab-panel[hidden]{
+  display: none !important;
+}
+
+
+/* =========================================================
+   5) TABELA DE LIVROS (LINHAS COMO CARDS)
+   ========================================================= */
+
+/* Área rolável da tabela */
+.table-scroll{
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 6px 10px 0;
+}
+
+/* Na página de livros, a tabela fica com altura normal */
+.page-livros .table-wrap{
+  width: 100%;
+  min-height: auto;
+  display: block;
+}
+
+.page-livros .table-scroll{
+  width: 100%;
+  min-height: auto;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+/* Tabela principal */
+.tbl{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+/* Cabeçalho da tabela */
+.tbl thead th{
+  padding: 0 16px 10px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7da3;
+  border: 0;
+  background: transparent;
+}
+
+/* Cabeçalho da coluna de ações */
+.th-actions{
+  text-align: right;
+  padding-left: 90px !important;
+}
+
+/* Linha da tabela */
+.tbl tbody tr{
+  background: transparent;
+}
+
+/* Células da tabela */
+.tbl tbody td{
+  padding: 14px 16px;
+  vertical-align: middle;
+  background: #fff;
+  border-top: 1px solid #dbe5f4;
+  border-bottom: 1px solid #dbe5f4;
+}
+
+/* Primeira célula: arredondamento esquerdo */
+.tbl tbody td:first-child{
+  border-left: 1px solid #dbe5f4;
+  border-top-left-radius: 18px;
+  border-bottom-left-radius: 18px;
+}
+
+/* Última célula: arredondamento direito */
+.tbl tbody td:last-child{
+  border-right: 1px solid #dbe5f4;
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.tbl tbody td:last-child,
+.tbl tbody td:last-child *{
+  box-sizing: border-box;
+}
+
+/* Título / nome principal da linha */
+.td-title{
+  font-weight: 700;
+  color: #1e3155;
+}
+
+/* Célula de ações */
+.td-actions{
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Wrapper interno das ações */
+.td-actions-wrap{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+/* Remove margem padrão do form dentro da célula */
+.td-actions form{
+  margin: 0;
+}
+
+/* Variante para célula sem ações */
+.td-actions--empty{
+  color: #7f8da8;
+  font-weight: 700;
+}
+
+/* Link comum */
+.a-link{
+  text-decoration: none;
+  font-weight: 950;
+  color: var(--brand);
+}
+
+.a-link:hover{
+  text-decoration: underline;
+}
+
+/* Link de perigo */
+.a-link.danger{
+  color: #b42318;
+}
+
+/* Separador de ações/textos */
+.dot{
+  color: var(--muted);
+  margin: 0 6px;
+}
+
+
+/* =========================================================
+   6) BADGES / STATUS
+   ========================================================= */
+
+.badge{
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 950;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+}
+
+.badge.ok{
+  color: #0b5d2a;
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.20);
+}
+
+.badge.warn{
+  color: #7c2d12;
+  background: rgba(245,158,11,.16);
+  border-color: rgba(245,158,11,.26);
+}
+
+
+/* =========================================================
+   7) ESTADO VAZIO
+   ========================================================= */
+
+.empty-row td{
+  border: 0 !important;
+  padding: 26px 16px 34px !important;
+}
+
+.empty{
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 18px 10px;
+}
+
+.empty-ico{
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(31,111,185,.10);
+  border: 1px solid rgba(31,111,185,.18);
+  font-size: 22px;
+}
+
+.empty-title{
+  font-weight: 950;
+  font-size: 13px;
+}
+
+.empty-sub{
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+
+
+/* =========================================================
+   8) PAGINAÇÃO
+   ========================================================= */
+
+.pager{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.pager-right{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pg-btn,
+.pg-num{
+  height: 32px;
+  min-width: 32px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 950;
+  font-size: 12px;
+  color: #233553;
+}
+
+.pg-btn:hover,
+.pg-num:hover{
+  background: #f7faff;
+}
+
+.pg-num.is-active{
+  background: rgba(31,111,185,.12);
+  border-color: rgba(31,111,185,.22);
+}
+
+.pg-ellipsis{
+  padding: 0 6px;
+  color: var(--muted);
+}
+
+
+/* =========================================================
+   9) MODAL DE EDITAR LIVRO
+   ========================================================= */
+
+/* Fundo escurecido */
+.modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(10,15,25,.45);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+}
+
+/* Área total do modal */
+.modal{
+  position: fixed;
+  inset: 0;
+  padding: 18px;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+}
+
+/* Esconde modal/backdrop por padrão */
+.modal[aria-hidden="true"],
+.modal-backdrop[aria-hidden="true"]{
+  display: none;
+}
+
+/* Card principal do modal */
+.modal-card{
+  width: min(1500px, 96vw);
+  max-height: calc(100vh - 80px);
+  overflow: auto;
+  background: rgba(255,255,255,.92);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 40px 90px rgba(10,15,25,.35);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cabeçalho fixo do modal */
+.modal-head{
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.90);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.modal-title{
+  margin: 0;
+  font-size: 14px;
+  font-weight: 950;
+  color: #233553;
+}
+
+/* Formulário do modal */
+.modal-form{
+  padding: 16px;
+}
+
+/* Corpo do modal */
+.modal-body{
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 14px;
+  align-items: start;
+  overflow: auto;
+  flex: 1;
+}
+
+/* Caixa da capa */
+.cover-box{
+  border: 1px dashed rgba(20,40,70,.18);
+  background: rgba(20,40,70,.03);
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.cover-title{
+  font-size: 12px;
+  font-weight: 950;
+  color: #233553;
+}
+
+/* Área de preview da capa */
+.cover-preview{
+  width: 100%;
+  height: 240px;
+  border-radius: 12px;
+  border: 1px solid rgba(20,40,70,.10);
+  background: #f3f4f6;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.cover-preview img,
+#coverImg{
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* Placeholder quando não há imagem */
+#coverPlaceholder{
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(22,34,53,.75);
+  padding: 10px;
+  text-align: center;
+}
+
+/* Texto auxiliar abaixo da capa */
+.cover-actions .help{
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+/* Cards de estatísticas de exemplares */
+.cover-stats{
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  background: rgba(0,0,0,.02);
+}
+
+.cover-stats__title{
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.cover-stats__grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.cover-stat{
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+.cover-stat__label{
+  font-size: 12px;
+  opacity: .75;
+  margin-bottom: 6px;
+}
+
+.cover-stat__value{
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Grid dos campos do formulário */
+.modal-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field-sinopse{
+  grid-column: 1 / -1;
+}
+
+/* Label dos campos */
+.field label{
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 950;
+  color: var(--muted);
+}
+
+/* Inputs, selects e textarea */
+.field input,
+.field select,
+.field textarea{
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  outline: 0;
+  background: #fff;
+}
+
+.field textarea{
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* Área de extras */
+.extras{
+  margin-top: 12px;
+  border-top: 1px solid rgba(20,40,70,.10);
+  padding-top: 12px;
+}
+
+.extras-title{
+  font-size: 12px;
+  font-weight: 950;
+  color: #233553;
+  margin-bottom: 8px;
+}
+
+.extras-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+/* Checkbox com label */
+.chk{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #233553;
+  font-weight: 800;
+}
+
+.chk input{
+  transform: translateY(1px);
+}
+
+/* Rodapé do modal fixo */
+.modal-actions{
+  position: sticky;
+  bottom: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--line);
+  background: rgba(255,255,255,.86);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Bloqueia o scroll da página quando o modal estiver aberto */
+body.modal-open{
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   10) BOTÕES DE AÇÃO DA TABELA
+   ========================================================= */
+
+/* Botão base */
+.action-btn{
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: #233553;
+  font-weight: 950;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform .08s ease,
+    background .12s ease,
+    border-color .12s ease,
+    box-shadow .12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  line-height: 1;
+}
+
+/* Hover */
+.action-btn:hover{
+  background: rgba(31,111,185,.08);
+  border-color: rgba(31,111,185,.22);
+}
+
+/* Clique */
+.action-btn:active{
+  transform: translateY(1px);
+}
+
+/* Foco acessível */
+.action-btn:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(31,111,185,.20);
+  border-color: rgba(31,111,185,.35);
+}
+
+/* Variação: editar */
+.action-btn--edit{
+  color: var(--brand);
+  border-color: rgba(31,111,185,.22);
+  background: rgba(31,111,185,.06);
+}
+
+.action-btn--edit:hover{
+  background: rgba(31,111,185,.12);
+  border-color: rgba(31,111,185,.30);
+}
+
+/* Variação: perigo / excluir */
+.action-btn--danger{
+  color: #b42318;
+  border-color: rgba(180,35,24,.22);
+  background: rgba(180,35,24,.06);
+}
+
+.action-btn--danger:hover{
+  background: rgba(180,35,24,.12);
+  border-color: rgba(180,35,24,.30);
+}
+
+/* Variação: restaurar */
+.action-btn--restore{
+  color: #0b5d2a;
+  border-color: rgba(22,163,74,.22);
+  background: rgba(22,163,74,.08);
+}
+
+.action-btn--restore:hover{
+  background: rgba(22,163,74,.14);
+  border-color: rgba(22,163,74,.30);
+}
+
+/* Separador opcional entre ações */
+.td-actions .dot{
+  margin: 0 2px;
+  opacity: .7;
+}
+
+
+/* =========================================================
+   11) RESPONSIVIDADE
+   ========================================================= */
+
+/* Filtros quebram em 2 colunas */
+@media (max-width: 1180px){
+  .page-livros .filters-grid{
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .page-livros .f-actions{
+    justify-content: flex-start;
+  }
+}
+
+/* Filtros em 1 coluna */
+@media (max-width: 720px){
+  .page-livros .filters-grid{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cabeçalho com abas empilha */
+@media (max-width: 900px){
+  .table-head--tabs{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .table-meta{
+    margin-left: 0;
+    white-space: normal;
+  }
+}
+
+/* Modal adapta para telas menores */
+@media (max-width: 980px){
+  .modal-card{
+    width: min(96vw, 920px);
+  }
+
+  .modal-body{
+    grid-template-columns: 1fr;
+  }
+
+  .modal-grid{
+    grid-template-columns: 1fr;
+  }
+
+  .cover-preview{
+    height: 220px;
+  }
+}
+
+/* Em larguras menores, força scroll horizontal da tabela */
+@media (max-width: 1100px){
+  .tbl{
+    min-width: 1100px;
+  }
+}
+
+.brand__logo{
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}

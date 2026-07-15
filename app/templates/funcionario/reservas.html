@@ -1,0 +1,682 @@
+<!-- templates/funcionario/reservas.html -->
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reservas • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reservas.css') }}">
+    {% include "_partials/alerts.html" %}
+</head>
+
+<body class="page-reservas">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
+    <div class="side-head">
+      <a class="brand" href="{{ url_for('funcionario.painel') }}">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}"
+        class="brand__logo">
+        <span class="brand__name">LiteraWEB</span>
+      </a>
+
+      <button class="icon-btn side-close" type="button" aria-label="Fechar menu" onclick="toggleSidebar(false)">
+        ✕
+      </button>
+    </div>
+
+    <nav class="side-nav" aria-label="Navegação do funcionário">
+      <a class="side-link {% if request.endpoint == 'funcionario.painel' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.painel') }}">
+        <span class="side-ico" aria-hidden="true">🏠</span>
+        <span>Painel de Controle</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.livros' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.livros') }}">
+        <span class="side-ico" aria-hidden="true">📚</span>
+        <span>Livros</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.reservas' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.reservas') }}">
+        <span class="side-ico" aria-hidden="true">🗓️</span>
+        <span>Reservas</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.usuarios' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.usuarios') }}">
+        <span class="side-ico" aria-hidden="true">👤</span>
+        <span>Usuários</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario_rag.painel_rag' %}is-active{% endif %}"
+           href="{{ url_for('funcionario_rag.painel_rag') }}">
+          <span class="side-ico" aria-hidden="true">🤖</span>
+          <span>Assistente Inteligente</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.politicas_emprestimo' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.politicas_emprestimo') }}">
+        <span class="side-ico" aria-hidden="true">🛡️</span>
+        <span>Políticas do Sistema</span>
+      </a>
+
+      <div class="side-sep"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-avatar" aria-hidden="true"></div>
+        <div class="side-user__meta">
+          <div class="side-user__name">{{ session.get("funcionario_nome", "Funcionário") }}</div>
+          <div class="side-user__role">Acesso interno</div>
+        </div>
+      </div>
+
+      <a class="side-logout" href="{{ url_for('auth.sair') }}">
+        <span aria-hidden="true">↩</span> Sair
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" aria-label="Abrir menu" onclick="toggleSidebar(true)">
+        ☰
+      </button>
+
+      <div class="welcome">
+        <div class="welcome__title">Reservas</div>
+        <div class="welcome__sub" id="pageClock">
+          {{ data_hoje }} • {{ hora_agora }}
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <a class="forum-btn" href="{{ url_for('forum.lista_topicos') }}">
+            <span class="forum-btn__ico" aria-hidden="true">💬</span>
+            <span>Ir para o Fórum</span>
+        </a>
+
+        <button class="user-pill" type="button" aria-label="Usuário logado">
+          <span class="user-pill__avatar" aria-hidden="true"></span>
+          <span class="user-pill__name">{{ session.get("funcionario_nome", "Funcionário") }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="content-inner">
+
+        <div class="page-head">
+          <div class="page-head__left">
+            <div class="page-head__title">Gerenciamento de Reservas</div>
+            <div class="page-head__sub">Acompanhe, filtre e atualize status de reservas.</div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <section class="panel filters" aria-label="Filtros de reservas">
+          <form class="filters-grid" method="get" action="{{ url_for('funcionario.reservas') }}">
+            <input type="hidden" name="page" value="1">
+
+            <div class="f-group">
+              <label class="f-label" for="q">Busca</label>
+              <div class="f-input">
+                <span class="f-ico" aria-hidden="true">🔎</span>
+                <input id="q" name="q" type="text"
+                       placeholder="Usuário, livro, tombo (código do exemplar)..."
+                       value="{{ request.args.get('q','') }}">
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="status">Status</label>
+              {% set st = request.args.get('status','') %}
+              <select id="status" name="status" class="f-select">
+                <option value="" {% if st == '' %}selected{% endif %}>Todos</option>
+                <option value="pendente" {% if st == 'pendente' %}selected{% endif %}>Pendente</option>
+                <option value="aprovada" {% if st == 'aprovada' %}selected{% endif %}>Aprovada</option>
+                <option value="separado" {% if st == 'separado' %}selected{% endif %}>Separado</option>
+                <option value="enviado" {% if st == 'enviado' %}selected{% endif %}>Enviado</option>
+                <option value="retirado" {% if st == 'retirado' %}selected{% endif %}>Retirado</option>
+                <option value="devolvido" {% if st == 'devolvido' %}selected{% endif %}>Devolvido</option>
+                <option value="cancelado" {% if st == 'cancelado' %}selected{% endif %}>Cancelado</option>
+              </select>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="tipo">Tipo</label>
+              {% set tp = request.args.get('tipo','') %}
+              <select id="tipo" name="tipo" class="f-select">
+                <option value="" {% if tp == '' %}selected{% endif %}>Todos</option>
+                <option value="retirada" {% if tp == 'retirada' %}selected{% endif %}>Retirada</option>
+                <option value="entrega" {% if tp == 'entrega' %}selected{% endif %}>Entrega</option>
+              </select>
+            </div>
+
+            <!-- filtro de situação de prazo -->
+            <div class="f-group">
+              <label class="f-label" for="prazo">Prazo</label>
+              {% set prazo = request.args.get('prazo','') %}
+              <select id="prazo" name="prazo" class="f-select">
+                <option value="" {% if prazo == '' %}selected{% endif %}>Todos</option>
+                <option value="atrasado" {% if prazo == 'atrasado' %}selected{% endif %}>Em atraso (devolução)</option>
+                <option value="vence_hoje" {% if prazo == 'vence_hoje' %}selected{% endif %}>Vence hoje</option>
+                <option value="no_prazo" {% if prazo == 'no_prazo' %}selected{% endif %}>No prazo</option>
+                <option value="retirada_expirada" {% if prazo == 'retirada_expirada' %}selected{% endif %}>Retirada expirada</option>
+                <option value="qualquer_atraso" {% if prazo == 'qualquer_atraso' %}selected{% endif %}>Qualquer atraso</option>
+              </select>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="de">Criada de</label>
+              <div class="f-input no-ico">
+                <input id="de" name="de" type="date" value="{{ request.args.get('de','') }}">
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="ate">Criada até</label>
+              <div class="f-input no-ico">
+                <input id="ate" name="ate" type="date" value="{{ request.args.get('ate','') }}">
+              </div>
+            </div>
+
+            <div class="f-actions">
+              <button class="btn-secondary" type="submit">Aplicar</button>
+              <a class="btn-ghost" href="{{ url_for('funcionario.reservas') }}">Limpar</a>
+            </div>
+          </form>
+
+          {% if request.args.get('prazo') %}
+            <div class="filters-hint">
+              Filtro de prazo ativo:
+              <strong>
+                {% if request.args.get('prazo') == 'atrasado' %}Em atraso (devolução)
+                {% elif request.args.get('prazo') == 'vence_hoje' %}Vence hoje
+                {% elif request.args.get('prazo') == 'no_prazo' %}No prazo
+                {% elif request.args.get('prazo') == 'retirada_expirada' %}Retirada expirada
+                {% elif request.args.get('prazo') == 'qualquer_atraso' %}Qualquer atraso
+                {% else %}{{ request.args.get('prazo') }}{% endif %}
+              </strong>
+            </div>
+          {% endif %}
+        </section>
+
+        <!-- Tabela -->
+        <section class="panel table-wrap" aria-label="Tabela de reservas">
+          {% set total = pag.total %}
+          {% set start = (pag.page - 1) * pag.per_page + 1 if total > 0 else 0 %}
+          {% set end = (pag.page - 1) * pag.per_page + (reservas|length) if total > 0 else 0 %}
+
+          <div class="table-head">
+            <div class="table-title">Reservas</div>
+            <div class="table-meta">
+              Mostrando <strong>{{ start }}</strong>–<strong>{{ end }}</strong> de <strong>{{ total }}</strong> reservas
+            </div>
+          </div>
+
+          <div class="table-scroll" role="region" aria-label="Tabela de reservas (rolável)">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th style="width: 70px;">ID</th>
+                  <th style="width: 190px;">Usuário</th>
+                  <th>Livro</th>
+                  <th style="width: 170px;">Exemplar</th>
+                  <th style="width: 110px;">Tipo</th>
+                  <th style="width: 170px;">Status</th>
+                  <th style="width: 160px;">Criada em</th>
+                  <th style="width: 280px;">Destino</th>
+                  <th style="width: 270px;">Ações</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% if reservas and reservas|length > 0 %}
+                  {% for r in reservas %}
+                    {% set status = (r.status or '').lower() %}
+                    {% if status == 'pendente' %}
+                      {% set st_label = 'Pendente' %}
+                      {% set st_class = 'warn' %}
+                    {% elif status == 'aprovada' %}
+                      {% set st_label = 'Aprovada' %}
+                      {% set st_class = 'info' %}
+                    {% elif status == 'separado' %}
+                      {% set st_label = 'Separado' %}
+                      {% set st_class = 'info2' %}
+                    {% elif status == 'enviado' %}
+                      {% set st_label = 'Enviado' %}
+                      {% set st_class = 'ok' %}
+                    {% elif status == 'retirado' %}
+                      {% set st_label = 'Retirado' %}
+                      {% set st_class = 'ok2' %}
+                    {% elif status == 'devolvido' %}
+                      {% set st_label = 'Devolvido' %}
+                      {% set st_class = 'neutral' %}
+                    {% elif status == 'cancelado' %}
+                      {% set st_label = 'Cancelado' %}
+                      {% set st_class = 'danger' %}
+                    {% else %}
+                      {% set st_label = (r.status or '-') %}
+                      {% set st_class = 'neutral' %}
+                    {% endif %}
+
+                    {% set tipo = (r.tipo or '').lower() %}
+                    {% set tipo_label = 'Entrega' if tipo == 'entrega' else 'Retirada' %}
+                    {% set tipo_class = 'chip-delivery' if tipo == 'entrega' else 'chip-pickup' %}
+
+                    <tr>
+                      <td>#{{ r.id }}</td>
+
+                      <td class="td-title">
+                        {% if r.usuario %}
+                          {{ r.usuario.nome_usuario }}
+                          <div class="td-sub">{{ r.usuario.email }}</div>
+                        {% else %}
+                          —
+                        {% endif %}
+                      </td>
+
+                      <td class="td-book">
+                        {% if r.exemplar and r.exemplar.livro %}
+                          <div class="book-title">{{ r.exemplar.livro.titulo }}</div>
+                          <div class="td-sub">{{ r.exemplar.livro.autor }}</div>
+                        {% else %}
+                          —
+                        {% endif %}
+                      </td>
+
+                      <td>
+                        {% if r.exemplar %}
+                          <div class="mono">{{ r.exemplar.codigo_exemplar }}</div>
+                          <div class="td-sub">{{ r.exemplar.status }}</div>
+                        {% else %}
+                          —
+                        {% endif %}
+                      </td>
+
+                      <td>
+                        <span class="chip {{ tipo_class }}">{{ tipo_label }}</span>
+                      </td>
+
+                      <td>
+                        <span class="badge {{ st_class }}">{{ st_label }}</span>
+
+                        {% if r.ui_prazo_label %}
+                          <div class="td-sub td-sub-flags">
+                            <span class="mini-flag {{ r.ui_prazo_class or '' }}">
+                              {{ r.ui_prazo_label }}
+                            </span>
+                          </div>
+                        {% endif %}
+                      </td>
+
+                      <td>
+                        {% if r.criado_em_br %}
+                          {{ r.criado_em_br.strftime("%d/%m/%Y") }}
+                          <div class="td-sub">{{ r.criado_em_br.strftime("%H:%M") }}</div>
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+
+                      <td class="td-destino">
+                        {% if tipo == 'entrega' %}
+                          <div class="dest-line">
+                            <span class="dest-ico" aria-hidden="true">📦</span>
+                            <span>{{ (r.rua or '-') }}, {{ (r.numero or '-') }}{% if r.complemento %} — {{ r.complemento }}{% endif %}</span>
+                          </div>
+                          <div class="dest-line muted">
+                            {{ (r.bairro or '-') }} • {{ (r.cidade or '-') }}/{{ (r.uf or '-') }} • CEP {{ (r.cep or '-') }}
+                          </div>
+                          {% if r.codigo_rastreio %}
+                            <div class="dest-line">
+                              <span class="dest-ico" aria-hidden="true">🔎</span>
+                              <span class="mono">Rastreio: {{ r.codigo_rastreio }}</span>
+                            </div>
+                          {% endif %}
+                        {% else %}
+                          <div class="dest-line">
+                            <span class="dest-ico" aria-hidden="true">🏛️</span>
+                            <span>Retirada na biblioteca</span>
+                          </div>
+                          {% if r.observacao %}
+                            <div class="dest-line muted">{{ r.observacao }}</div>
+                          {% endif %}
+                        {% endif %}
+                      </td>
+
+                      <td class="td-actions">
+                        <div class="td-actions-wrap">
+                          <!-- Ver (submenu accordion) -->
+                          <button
+                            type="button"
+                            class="action-btn action-btn--edit js-toggle-submenu"
+                            data-target="reserva-submenu-{{ r.id }}"
+                            aria-expanded="false"
+                            aria-controls="reserva-submenu-{{ r.id }}"
+                          >
+                            Ver
+                          </button>
+
+                          <span class="dot">•</span>
+
+                          <!-- Atualizar status inline -->
+                          <form class="mini-form" method="post" action="{{ url_for('funcionario.reserva_mudar_status', reserva_id=r.id) }}">
+                            <input type="hidden" name="next" value="{{ request.full_path }}">
+                            <select class="mini-select" name="status" aria-label="Alterar status">
+                              <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+                              <option value="aprovada" {% if status == 'aprovada' %}selected{% endif %}>Aprovada</option>
+                              <option value="separado" {% if status == 'separado' %}selected{% endif %}>Separado</option>
+                              <option value="enviado" {% if status == 'enviado' %}selected{% endif %}>Enviado</option>
+                              <option value="retirado" {% if status == 'retirado' %}selected{% endif %}>Retirado</option>
+                              <option value="devolvido" {% if status == 'devolvido' %}selected{% endif %}>Devolvido</option>
+                              <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                            <button class="mini-btn" type="submit">OK</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- SUBMENU / DETALHES -->
+                    <tr id="reserva-submenu-{{ r.id }}" class="reserva-subrow" hidden>
+                      <td colspan="9" class="reserva-subcell">
+                        <div class="reserva-submenu-panel">
+                          <div class="reserva-submenu-head">
+                            <div class="reserva-submenu-title">
+                              Detalhes rápidos da reserva #{{ r.id }}
+                            </div>
+
+                            <div class="reserva-submenu-badges">
+                              <span class="badge {{ st_class }}">{{ st_label }}</span>
+                              <span class="chip {{ tipo_class }}">{{ tipo_label }}</span>
+
+                              {% if r.ui_prazo_label %}
+                                <span class="mini-flag {{ r.ui_prazo_class or '' }}">
+                                  {{ r.ui_prazo_label }}
+                                </span>
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="reserva-submenu-grid">
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Reserva criada em</div>
+                              <div class="sub-info-value">
+                                {{ r.criado_em_br.strftime("%d/%m/%Y %H:%M") if r.criado_em_br else '—' }}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Prazo para retirada</div>
+                              <div class="sub-info-value">
+                                {{ r.retirar_ate_br.strftime("%d/%m/%Y %H:%M") if r.retirar_ate_br else '—' }}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Empréstimo iniciado em</div>
+                              <div class="sub-info-value">
+                                {{ r.emprestado_em_br.strftime("%d/%m/%Y %H:%M") if r.emprestado_em_br else '—' }}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Devolver até</div>
+                              <div class="sub-info-value">
+                                {{ r.devolver_ate.strftime("%d/%m/%Y") if r.devolver_ate else '—' }}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Devolução registrada em</div>
+                              <div class="sub-info-value">
+                                {{ r.devolvido_em_br.strftime("%d/%m/%Y %H:%M") if r.devolvido_em_br else '—' }}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Renovações</div>
+                              <div class="sub-info-value">
+                                {{ r.renovacoes if r.renovacoes is not none else 0 }}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Usuário</div>
+                              <div class="sub-info-value">
+                                {% if r.usuario %}
+                                  {{ r.usuario.nome_usuario }}{% if r.usuario.email %} • {{ r.usuario.email }}{% endif %}
+                                {% else %}
+                                  —
+                                {% endif %}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Livro</div>
+                              <div class="sub-info-value">
+                                {% if r.exemplar and r.exemplar.livro %}
+                                  {{ r.exemplar.livro.titulo }}{% if r.exemplar.livro.autor %} • {{ r.exemplar.livro.autor }}{% endif %}
+                                {% else %}
+                                  —
+                                {% endif %}
+                              </div>
+                            </div>
+
+                            <div class="sub-info-card">
+                              <div class="sub-info-label">Exemplar</div>
+                              <div class="sub-info-value">
+                                {% if r.exemplar %}
+                                  {{ r.exemplar.codigo_exemplar or '—' }}{% if r.exemplar.status %} • {{ r.exemplar.status }}{% endif %}
+                                {% else %}
+                                  —
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="reserva-submenu-extra">
+                            {% if r.codigo_rastreio %}
+                              <div class="sub-inline-note">
+                                <strong>Código de rastreio:</strong> <span class="mono">{{ r.codigo_rastreio }}</span>
+                              </div>
+                            {% endif %}
+
+                            {% if r.observacao %}
+                              <div class="sub-inline-note">
+                                <strong>Observação:</strong> {{ r.observacao }}
+                              </div>
+                            {% endif %}
+
+                            {% if tipo == 'entrega' %}
+                              <div class="sub-inline-note">
+                                <strong>Endereço de entrega:</strong>
+                                {{ (r.rua or '-') }}, {{ (r.numero or '-') }}
+                                {% if r.complemento %} — {{ r.complemento }}{% endif %}
+                                • {{ (r.bairro or '-') }} • {{ (r.cidade or '-') }}/{{ (r.uf or '-') }}
+                                • CEP {{ (r.cep or '-') }}
+                              </div>
+                            {% else %}
+                              <div class="sub-inline-note">
+                                <strong>Retirada:</strong> Biblioteca (retirada presencial).
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr class="empty-row">
+                    <td colspan="9">
+                      <div class="empty">
+                        <div class="empty-ico" aria-hidden="true">🗓️</div>
+                        <div class="empty-title">Nenhuma reserva encontrada</div>
+                        <div class="empty-sub">
+                          Quando usuários começarem a reservar, elas aparecerão aqui automaticamente.
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginação -->
+          <div class="pager">
+            <div class="pager-left">
+              Mostrando {{ start }}–{{ end }} de {{ total }} reservas
+            </div>
+
+            <div class="pager-right" aria-label="Paginação">
+              {% if pag.has_prev %}
+                <a class="pg-btn" href="{{ url_for('funcionario.reservas', page=pag.prev_num, **args_no_page) }}">←</a>
+              {% else %}
+                <button class="pg-btn" type="button" disabled>←</button>
+              {% endif %}
+
+              {% if pages and pages[0] > 1 %}
+                <a class="pg-num" href="{{ url_for('funcionario.reservas', page=1, **args_no_page) }}">1</a>
+                {% if pages[0] > 2 %}<span class="pg-ellipsis">…</span>{% endif %}
+              {% endif %}
+
+              {% for p in pages %}
+                {% if p == pag.page %}
+                  <button class="pg-num is-active" type="button">{{ p }}</button>
+                {% else %}
+                  <a class="pg-num" href="{{ url_for('funcionario.reservas', page=p, **args_no_page) }}">{{ p }}</a>
+                {% endif %}
+              {% endfor %}
+
+              {% if pages and pages[-1] < pag.pages %}
+                {% if pages[-1] < pag.pages - 1 %}<span class="pg-ellipsis">…</span>{% endif %}
+                <a class="pg-num" href="{{ url_for('funcionario.reservas', page=pag.pages, **args_no_page) }}">{{ pag.pages }}</a>
+              {% endif %}
+
+              {% if pag.has_next %}
+                <a class="pg-btn" href="{{ url_for('funcionario.reservas', page=pag.next_num, **args_no_page) }}">→</a>
+              {% else %}
+                <button class="pg-btn" type="button" disabled>→</button>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Backdrop mobile (sidebar) -->
+  <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+  <script>
+    // ===== Sidebar (igual ao livros.html) =====
+    const backdrop = document.getElementById("backdrop");
+
+    function toggleSidebar(open){
+      document.body.classList.toggle("side-open", !!open);
+      if (backdrop) backdrop.style.display = open ? "block" : "none";
+    }
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 980) {
+        if (backdrop) backdrop.style.display = "none";
+        document.body.classList.remove("side-open");
+      }
+    });
+
+    // ===== Relógio da topbar =====
+    function atualizarRelogioTopbar() {
+      const el = document.getElementById("pageClock");
+      if (!el) return;
+
+      const agora = new Date();
+
+      const data = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(agora);
+
+      const hora = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(agora);
+
+      el.textContent = `${data} • ${hora}`;
+    }
+
+    atualizarRelogioTopbar();
+
+    setInterval(() => {
+      atualizarRelogioTopbar();
+    }, 10000);
+
+    // ===== Submenu (accordion) da tabela de reservas =====
+    function closeAllReservaSubmenus(exceptId = null) {
+      document.querySelectorAll(".reserva-subrow").forEach(row => {
+        if (exceptId && row.id === exceptId) return;
+        row.hidden = true;
+      });
+
+      document.querySelectorAll(".js-toggle-submenu").forEach(btn => {
+        const targetId = btn.getAttribute("data-target");
+        if (exceptId && targetId === exceptId) return;
+        btn.setAttribute("aria-expanded", "false");
+        btn.classList.remove("is-open");
+        btn.textContent = "Ver";
+      });
+    }
+
+    function toggleReservaSubmenu(button){
+      const targetId = button.getAttribute("data-target");
+      if (!targetId) return;
+
+      const row = document.getElementById(targetId);
+      if (!row) return;
+
+      const isOpen = button.getAttribute("aria-expanded") === "true";
+
+      // Accordion: deixa só 1 aberto por vez
+      closeAllReservaSubmenus(targetId);
+
+      if (isOpen) {
+        row.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+        button.classList.remove("is-open");
+        button.textContent = "Ver";
+      } else {
+        row.hidden = false;
+        button.setAttribute("aria-expanded", "true");
+        button.classList.add("is-open");
+        button.textContent = "Ocultar";
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".js-toggle-submenu");
+      if (!btn) return;
+      e.preventDefault();
+      toggleReservaSubmenu(btn);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeAllReservaSubmenus();
+      }
+    });
+  </script>
+</body>
+</html>

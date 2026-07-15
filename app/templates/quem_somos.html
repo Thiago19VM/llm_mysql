@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quem Somos • LiteraWEB</title>
+    {% include "_includes/head_favicon.html" %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/quem_somos.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/notificacoes.css') }}">
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: "0 18px 45px rgba(10,15,25,.10)",
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="page-qs relative min-h-screen flex flex-col text-slate-900 overflow-x-hidden">
+
+  <!-- Color blobs (fundo) - mesmo padrão do HOME -->
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute -top-28 -left-28 h-96 w-96 rounded-full bg-sky-400/25 blur-3xl"></div>
+    <div class="absolute -top-24 -right-32 h-[28rem] w-[28rem] rounded-full bg-cyan-400/20 blur-3xl"></div>
+    <div class="absolute top-[45%] -left-24 h-80 w-80 rounded-full bg-indigo-400/14 blur-3xl"></div>
+    <div class="absolute bottom-[-6rem] right-[10%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-400/12 blur-3xl"></div>
+  </div>
+
+  {% include "_includes/navbar.html" %}
+
+  <!-- CONTEÚDO -->
+  <main class="flex-1 py-10">
+    <div class="container">
+
+      <!-- Head -->
+      <header class="max-w-3xl">
+        <h1 class="mt-4 text-3xl md:text-4xl font-extrabold tracking-tight">
+          Sobre o LiteraWEB
+        </h1>
+
+        <p class="mt-3 text-sm md:text-base text-slate-600 font-semibold leading-relaxed">
+          O LiteraWEB é um projeto de TCC focado em organizar livros, facilitar reservas e oferecer uma experiência simples e moderna para bibliotecas e leitores.
+        </p>
+      </header>
+
+      <!-- Cards -->
+      <section class="mt-6 grid gap-4 md:grid-cols-3" aria-label="Informações do projeto">
+        <article class="qs-card">
+          <div class="p-5 md:p-6">
+            <div class="mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 border border-sky-100 text-lg" aria-hidden="true">🎯</div>
+            <h2 class="text-sm font-extrabold text-slate-900">Objetivo</h2>
+            <p class="mt-2 text-sm text-slate-600 font-semibold leading-relaxed">
+              Centralizar o catálogo de livros e tornar o processo de consulta e gestão mais prático — com busca, filtros e módulos prontos para crescer.
+            </p>
+          </div>
+        </article>
+
+        <article class="qs-card">
+          <div class="p-5 md:p-6">
+            <div class="mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 border border-sky-100 text-lg" aria-hidden="true">👥</div>
+            <h2 class="text-sm font-extrabold text-slate-900">Equipe</h2>
+            <p class="mt-2 text-sm text-slate-600 font-semibold leading-relaxed">
+              Projeto desenvolvido por <strong>Thiago, Kaique, André e Diego</strong>, com foco em backend, banco de dados e criação das telas.
+            </p>
+          </div>
+        </article>
+
+        <article class="qs-card">
+          <div class="p-5 md:p-6">
+            <div class="mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 border border-sky-100 text-lg" aria-hidden="true">🧩</div>
+            <h2 class="text-sm font-extrabold text-slate-900">Fórum</h2>
+            <p class="mt-2 text-sm text-slate-600 font-semibold leading-relaxed">
+              Através do nosso Fórum, milhares de pessoas podem interagir entre si.
+            </p>
+          </div>
+        </article>
+      </section>
+
+      <!-- Painel final -->
+      <section class="mt-6 qs-panel" aria-label="Resumo">
+        <div class="qs-panel__inner">
+          <div class="p-5 md:p-6 border-b border-slate-200/80 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <div class="text-base font-extrabold text-slate-900">Por que o LiteraWEB existe?</div>
+              <div class="mt-1 text-sm text-slate-600 font-semibold">Uma explicação rápida</div>
+            </div>
+
+            <a class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-5 py-3 text-sm font-extrabold text-white shadow hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-sky-200"
+               href="{{ url_for('main.home') }}">
+              Voltar ao início
+            </a>
+          </div>
+
+          <div class="p-5 md:p-6 text-sm text-slate-700 font-semibold leading-relaxed">
+            <p class="mb-3">
+              Bibliotecas precisam de organização, e leitores precisam encontrar livros rápido.
+              O LiteraWEB nasce para unir esses dois lados: uma interface agradável para consulta,
+              um painel administrativo eficiente para gerenciar livros e usuários, além de um fórum
+              para interação entre usuários.
+            </p>
+
+            <p class="text-slate-500">
+              Este projeto está em evolução e novas funcionalidades serão adicionadas gradualmente.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  {% include "_includes/footer.html" %}
+
+</body>
+</html>

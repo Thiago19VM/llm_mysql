@@ -1,0 +1,36 @@
+{% macro avatar_usuario(u, size="h-8 w-8", rounded="rounded-full") %}
+  {% set nome = (u.nome_usuario if u and u.nome_usuario else 'U') %}
+  {% set letra = (nome[:1] | upper) %}
+
+  {% set palettes = [
+    'from-sky-600 to-cyan-500',
+    'from-amber-500 to-orange-500',
+    'from-emerald-600 to-lime-500',
+    'from-violet-600 to-fuchsia-500',
+    'from-rose-600 to-pink-500',
+    'from-slate-700 to-slate-500',
+  ] %}
+  {% set idx = (u.id if u and u.id else 0) % 6 %}
+  {% set grad = palettes[idx] %}
+
+  {% if u and u.foto %}
+    {% set f = u.foto %}
+    {% set path = f if f.startswith('uploads/') else ('uploads/usuarios/' ~ f) %}
+    <img
+      src="{{ url_for('static', filename=path) }}"
+      onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/avatar-default.png') }}';"
+      alt="Foto de {{ nome }}"
+      class="{{ size }} {{ rounded }} object-cover border border-slate-200"
+      loading="lazy"
+    >
+  {% else %}
+    <div
+      class="{{ size }} {{ rounded }} grid place-items-center border border-slate-200
+             bg-gradient-to-br {{ grad }} text-white font-extrabold select-none"
+      aria-label="Avatar de {{ nome }}"
+      title="{{ nome }}"
+    >
+      {{ letra }}
+    </div>
+  {% endif %}
+{% endmacro %}

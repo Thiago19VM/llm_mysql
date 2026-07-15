@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% block title %}Fórum • LiteraWEB{% endblock %}
+
+{% block content %}
+{% from "_macros/avatar.html" import avatar_usuario %}
+{% set tags_raw = (request.args.get('tags') or '').strip() %}
+{% set active_tags = (tags_raw.split(',') if tags_raw else []) %}
+{% set has_filters = (q|length > 0) or (active_tags|length > 0) or (livro_id and livro_id|length > 0) or (ordem and ordem != 'atividade') %}
+
+<div class="mx-auto w-full max-w-7xl">
+
+  <div class="grid gap-5 lg:grid-cols-12">
+    <!-- COLUNA PRINCIPAL -->
+    <div class="lg:col-span-8 space-y-5">
+
+      <!-- HERO (estilo do React) -->
+      <section class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
+        <div class="absolute inset-0 bg-gradient-to-br from-sky-700 via-sky-700/90 to-cyan-600"></div>
+
+        <div class="pointer-events-none absolute inset-0">
+          <div class="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10"></div>
+          <div class="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-cyan-300/20"></div>
+          <div class="absolute right-1/4 top-1/3 h-32 w-32 rounded-full bg-indigo-300/10"></div>
+        </div>
+
+        <div class="relative p-5 sm:p-6">
+          <div class="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 backdrop-blur-sm">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-sm font-extrabold text-white/90">Comunidade LiteraWEB</span>
+          </div>
+
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-3">
+              <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                <span class="mr-2 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/15 text-white/90">
+                  📚
+                </span>
+                Fórum de livros e discussões
+              </h1>
+              <p class="max-w-xl text-sm font-semibold text-white/75 sm:text-base">
+                Crie tópicos, compartilhe opiniões e acompanhe a atividade da comunidade — com visual de “board” de fórum.
+              </p>
+            </div>
+
+            <div class="shrink-0">
+              {% if session.get("usuario_id") %}
+                <a href="{% if livro_id and livro_id.isdigit() %}{{ url_for('forum.novo_topico', livro_id=livro_id) }}{% else %}{{ url_for('forum.novo_topico') }}{% endif %}"
+                   class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-sky-700 shadow-lg hover:bg-white/90">
+                  ➕ Novo tópico
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- STATS -->
+          <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            <div class="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-white/30 to-white/10 text-white">
+                🧾
+              </div>
+              <div>
+                <div class="text-xs font-extrabold text-white/60">Tópicos</div>
+                <div class="text-lg font-extrabold text-white leading-tight">{{ pag.total }}</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-300/40 to-white/10 text-white">
+                📌
+              </div>
+              <div>
+                <div class="text-xs font-extrabold text-white/60">Nesta página</div>
+                <div class="text-lg font-extrabold text-white leading-tight">{{ topicos|length }}</div>
+              </div>
+            </div>
+
+            <div class="col-span-2 flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-300/40 to-white/10 text-white">
+                🟢
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs font-extrabold text-white/60">Usuários online</div>
+                <div class="text-lg font-extrabold text-white leading-tight">
+                  <span id="forum-online-count">{{ online_count|default(0) }}</span>
+                  <span class="text-white/80">agora</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- FILTROS -->
+      <section class="rounded-3xl border border-slate-200 bg-white/90 backdrop-blur shadow-soft p-4 sm:p-5">
+        <form id="forum-filters" method="get" action="{{ url_for('forum.lista_topicos') }}" class="space-y-4">
+          <input type="hidden" name="tags" id="tags-input" value="{{ tags_raw }}"/>
+
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="flex-1 space-y-1.5">
+              <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Buscar</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+                <input
+                  name="q"
+                  value="{{ q }}"
+                  placeholder="Título, conteúdo, livro, autor..."
+                  class="w-full rounded-2xl border border-slate-200 bg-white px-9 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300"
+                />
+              </div>
+            </div>
+
+            <div class="w-full space-y-1.5 sm:w-44">
+              <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Livro</label>
+              <select name="livro_id"
+                      class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300">
+                <option value="">Todos</option>
+                {% for l in livros_filtro %}
+                  <option value="{{ l.id }}" {% if livro_id and livro_id.isdigit() and (l.id == livro_id|int) %}selected{% endif %}>
+                    {{ l.titulo }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="w-full space-y-1.5 sm:w-44">
+              <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ordenar</label>
+              <select name="ordem"
+                      class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-300">
+                <option value="atividade" {% if ordem == 'atividade' %}selected{% endif %}>Atividade</option>
+                <option value="recentes" {% if ordem == 'recentes' %}selected{% endif %}>Mais recentes</option>
+                <option value="views" {% if ordem == 'views' %}selected{% endif %}>Mais vistos</option>
+                <option value="comentados" {% if ordem == 'comentados' %}selected{% endif %}>Mais comentados</option>
+                <option value="antigos" {% if ordem == 'antigos' %}selected{% endif %}>Mais antigos</option>
+              </select>
+            </div>
+
+            <div class="flex gap-2">
+              <button type="submit"
+                      class="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-sky-800">
+                🎛️ Filtrar
+              </button>
+
+              {% if has_filters %}
+                <a href="{{ url_for('forum.lista_topicos') }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold text-slate-500 hover:bg-slate-100">
+                  ✖ Limpar
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            {% set tag_cfg = [
+              ('pinned','Fixado','border-amber-300/60 text-amber-700 hover:bg-amber-50','bg-amber-600 text-white border-amber-600'),
+              ('locked','Trancado','border-slate-300/70 text-slate-700 hover:bg-slate-50','bg-slate-800 text-white border-slate-800'),
+              ('book','Livro','border-cyan-300/70 text-cyan-700 hover:bg-cyan-50','bg-cyan-600 text-white border-cyan-600'),
+              ('general','Geral','border-sky-300/70 text-sky-700 hover:bg-sky-50','bg-sky-700 text-white border-sky-700'),
+            ] %}
+
+            {% for id,label,cls,active_cls in tag_cfg %}
+              {% set is_active = id in active_tags %}
+              <button type="button"
+                      data-tag="{{ id }}"
+                      class="tag-chip rounded-full border px-3.5 py-1 text-xs font-extrabold transition {{ active_cls if is_active else cls }}">
+                {{ label }}
+              </button>
+            {% endfor %}
+          </div>
+        </form>
+      </section>
+
+      <!-- LISTA -->
+      <section class="space-y-3">
+        {% if topicos %}
+          <div class="hidden sm:flex items-center justify-between rounded-2xl bg-white/60 border border-slate-200 px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-slate-500">
+            <span>Tópico</span>
+            <div class="flex items-center gap-8">
+              <span>Respostas</span>
+              <span>Views</span>
+              <span>Atividade</span>
+            </div>
+          </div>
+
+          {% for t in topicos %}
+            {% set border_color = 'border-l-sky-700' %}
+            {% if t.fixado %}
+              {% set border_color = 'border-l-amber-500' %}
+            {% elif t.trancado %}
+              {% set border_color = 'border-l-slate-700' %}
+            {% elif t.livro %}
+              {% set border_color = 'border-l-cyan-600' %}
+            {% endif %}
+
+            {% set atividade = (t.ultimo_comentario_em or t.criado_em) %}
+
+            <div class="group flex flex-col gap-3 rounded-2xl border border-slate-200/70 border-l-4 {{ border_color }} bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:bg-white sm:flex-row sm:items-center">
+
+              <div class="flex items-start gap-3 sm:items-center">
+                  <a href="{% if session.get('usuario_id') and t.autor and t.autor.id == session.get('usuario_id') %}
+                              {{ url_for('forum.meus_topicos') }}
+                            {% else %}
+                              {{ url_for('forum.perfil_usuario', nome_usuario=t.autor.nome_usuario) }}
+                            {% endif %}"
+                     class="shrink-0"
+                     title="{% if session.get('usuario_id') and t.autor and t.autor.id == session.get('usuario_id') %}
+                              Ver meu perfil
+                            {% else %}
+                              Ver perfil de {{ _nome_usuario(t.autor) }}
+                            {% endif %}">
+                    <div class="rounded-full transition hover:scale-[1.02] hover:ring-4 hover:ring-sky-100">
+                      {{ avatar_usuario(t.autor, size="h-10 w-10", rounded="rounded-full") }}
+                    </div>
+                  </a>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ url_for('forum.topico_detalhe', topico_id=t.id, slug=t.url_slug) }}"
+                       class="text-sm font-extrabold text-slate-900 line-clamp-1 transition-colors hover:text-sky-700">
+                      {% if t.livro %}📚{% endif %}
+                      {{ t.titulo }}
+                    </a>
+
+                    {% if t.fixado %}
+                      <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold bg-amber-100/80 text-amber-800">
+                        📌 Fixado
+                      </span>
+                    {% endif %}
+                    {% if t.trancado %}
+                      <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold bg-slate-100 text-slate-700">
+                        🔒 Trancado
+                      </span>
+                    {% endif %}
+                    {% if t.livro %}
+                      <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold bg-cyan-100/70 text-cyan-800">
+                        Livro
+                      </span>
+                    {% endif %}
+                    {% if (not t.livro) and (not t.fixado) and (not t.trancado) %}
+                      <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold bg-sky-100/70 text-sky-800">
+                        Geral
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
+                    <a href="{{ url_for('forum.perfil_usuario', nome_usuario=t.autor.nome_usuario) }}"
+                       class="font-extrabold text-slate-700/80 hover:text-sky-700">
+                      {{ _nome_usuario(t.autor) }}
+                    </a>
+                    <span class="inline-flex items-center gap-1">
+                      🕒 {{ t.criado_em|dtbr if t.criado_em else '-' }}
+                    </span>
+                    {% if t.atualizado_em and t.atualizado_em != t.criado_em %}
+                      <span class="italic text-slate-400">editado</span>
+                    {% endif %}
+                  </div>
+
+                  {% if t.conteudo %}
+                    <div class="mt-2 text-sm font-semibold text-slate-600">
+                      {{ _resumo_texto(t.conteudo, 180) }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 text-xs font-semibold text-slate-500 sm:ml-auto sm:shrink-0">
+                <div class="flex items-center gap-1.5 rounded-xl bg-cyan-50 px-2.5 py-1.5 border border-cyan-100">
+                  💬 <span class="font-extrabold text-cyan-700">{{ t.comentarios_count or 0 }}</span>
+                  <span class="hidden sm:inline text-cyan-700/80">respostas</span>
+                </div>
+
+                <div class="flex items-center gap-1.5 rounded-xl bg-sky-50 px-2.5 py-1.5 border border-sky-100">
+                  👁️ <span class="font-extrabold text-sky-700">{{ t.visualizacoes or 0 }}</span>
+                  <span class="hidden sm:inline text-sky-700/80">views</span>
+                </div>
+
+                <div class="hidden sm:flex items-center gap-1.5 text-slate-500/80">
+                  ⏱️ <span>{{ atividade|dtbr if atividade else '-' }}</span>
+                </div>
+              </div>
+
+            </div>
+          {% endfor %}
+
+          {% if pag.pages > 1 %}
+            <div class="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-soft">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="text-xs font-extrabold text-slate-600">Página {{ pag.page }} de {{ pag.pages }}</div>
+
+                <div class="flex flex-wrap gap-2">
+                  {% if pag.has_prev %}
+                    <a href="{{ url_for('forum.lista_topicos', page=pag.prev_num, **args_no_page) }}"
+                       class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                      ← Anterior
+                    </a>
+                  {% else %}
+                    <span class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-400">
+                      ← Anterior
+                    </span>
+                  {% endif %}
+
+                  {% for p in pag.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if p %}
+                      {% if p == pag.page %}
+                        <span class="rounded-xl bg-slate-900 px-3 py-2 text-xs font-extrabold text-white">
+                          {{ p }}
+                        </span>
+                      {% else %}
+                        <a href="{{ url_for('forum.lista_topicos', page=p, **args_no_page) }}"
+                           class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                          {{ p }}
+                        </a>
+                      {% endif %}
+                    {% else %}
+                      <span class="px-2 text-xs font-extrabold text-slate-400">…</span>
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if pag.has_next %}
+                    <a href="{{ url_for('forum.lista_topicos', page=pag.next_num, **args_no_page) }}"
+                       class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                      Próxima →
+                    </a>
+                  {% else %}
+                    <span class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-400">
+                      Próxima →
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+        {% else %}
+          <div class="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-soft text-center">
+            <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-2xl">💬</div>
+            <h3 class="mt-4 text-lg font-extrabold text-slate-900">Nenhum tópico encontrado</h3>
+            <p class="mt-2 text-sm font-semibold text-slate-600">
+              Ajuste os filtros ou crie o primeiro tópico.
+            </p>
+            <div class="mt-4 flex justify-center gap-2">
+              <a href="{{ url_for('forum.lista_topicos') }}"
+                 class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+                Limpar filtros
+              </a>
+              {% if session.get("usuario_id") %}
+                <a href="{{ url_for('forum.novo_topico') }}"
+                   class="inline-flex items-center justify-center rounded-xl bg-sky-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-sky-800">
+                  + Novo tópico
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="lg:col-span-4">
+      {% include "forum/_sidebar_forum.html" %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function(){
+    const form = document.getElementById("forum-filters");
+    const input = document.getElementById("tags-input");
+    if(!form || !input) return;
+
+    function getTags(){
+      const raw = (input.value || "").trim();
+      if(!raw) return [];
+      return raw.split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    function setTags(tags){
+      input.value = tags.join(",");
+    }
+
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".tag-chip[data-tag]");
+      if(!btn) return;
+
+      const tag = btn.getAttribute("data-tag");
+      if(!tag) return;
+
+      let tags = getTags();
+      const idx = tags.indexOf(tag);
+      if(idx >= 0) tags.splice(idx, 1);
+      else tags.push(tag);
+
+      setTags(tags);
+      form.submit();
+    });
+  })();
+
+  (function(){
+    const el = document.getElementById("forum-online-count");
+    if(!el) return;
+
+    async function refreshOnline(){
+      try{
+        const resp = await fetch("{{ url_for('forum.forum_online_count') }}", { cache: "no-store" });
+        if(!resp.ok) return;
+        const data = await resp.json();
+        if(typeof data.online === "number"){
+          el.textContent = data.online;
+        }
+      }catch(e){}
+    }
+
+    refreshOnline();
+    setInterval(refreshOnline, 30000);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+/* static/css/adicionar_livro.css */
+/* Esta folha assume que o layout base (sidebar/topbar/panels) vem do painel.css */
+
+.page-livros-add .content .content-inner{
+  width: 100%;
+  max-width: 1500px;
+}
+
+/* Painel do formulário */
+.panel-form{
+  padding: 18px;
+}
+
+/* Campos (grid do topo) */
+.form-grid{
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.9fr;
+  gap: 14px 16px;
+}
+
+/* Corpo: sinopse grande + coluna direita */
+.form-body{
+  display: grid;
+  grid-template-columns: 1.6fr 0.75fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+/* Campo padrão */
+.field label{
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  color: #5a6e88;
+  margin: 0 0 6px;
+}
+
+.field input,
+.field select,
+.field textarea{
+  width: 100%;
+  border: 1px solid #e7eef8;
+  background: rgba(255,255,255,.92);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color: rgba(31,111,185,.35);
+  box-shadow: 0 0 0 4px rgba(31,111,185,.10);
+}
+
+/* Sinopse */
+.field-sinopse textarea{
+  min-height: 360px;
+  resize: vertical;
+}
+
+/* Coluna direita */
+.side-col{
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.field .help{
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #6b7a90;
+}
+
+/* Ações do formulário */
+.form-actions{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e7eef8;
+}
+
+.actions-right{
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Botões */
+.btn{
+  border: 1px solid #e7eef8;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #162235;
+}
+
+.btn:hover{
+  background: #f7faff;
+  border-color: rgba(31,111,185,.22);
+}
+
+.btn-ghost{
+  background: transparent;
+}
+
+.btn-primary{
+  background: #1f6fb9;
+  border-color: rgba(31,111,185,.35);
+  color: #fff;
+}
+.btn-primary:hover{
+  background: #2e8cff;
+}
+
+.btn-danger{
+  background: #ef4444;
+  border-color: rgba(239,68,68,.35);
+  color: #fff;
+}
+.btn-danger:hover{
+  background: #dc2626;
+}
+
+/* Responsividade */
+@media (max-width: 1180px){
+  .form-grid{
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-body{
+    grid-template-columns: 1fr;
+  }
+  .field-sinopse textarea{
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 640px){
+  .form-grid{
+    grid-template-columns: 1fr;
+  }
+  .form-actions{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions-right{
+    justify-content: flex-end;
+  }
+}

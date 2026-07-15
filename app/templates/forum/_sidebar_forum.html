@@ -1,0 +1,126 @@
+{% set topico_atual_id = topico.id if topico is defined and topico else None %}
+
+<div class="space-y-4">
+
+  {% if not session.get("funcionario_id") %}
+    <!-- Painel -->
+    <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-soft">
+      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-soft">
+        <div class="bg-gradient-to-r from-sky-700 to-cyan-600 px-4 py-3 text-white">
+          <div class="text-sm font-extrabold">🧭 Painel do fórum</div>
+          <div class="mt-1 text-xs font-semibold text-white/80">Acesso rápido às ações principais</div>
+        </div>
+
+        <div class="space-y-3 p-4">
+          {% if session.get("usuario_id") %}
+            <a href="{{ url_for('forum.meus_topicos') }}"
+               class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-800 transition hover:bg-slate-50">
+              <span>👁️ Meus tópicos</span>
+            </a>
+
+            <a href="{{ url_for('forum.novo_topico') }}"
+               class="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-500 px-4 py-3 text-sm font-extrabold text-white transition hover:brightness-105">
+              <span>➕ Criar tópico</span>
+            </a>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}"
+               class="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-500 px-4 py-3 text-sm font-extrabold text-white transition hover:brightness-105">
+              <span>🔐 Entrar para postar</span>
+            </a>
+
+            <a href="{{ url_for('auth.cadastro') }}"
+               class="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-50">
+              <span>📝 Criar conta</span>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- Recentes -->
+  <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-soft">
+    <div class="bg-gradient-to-r from-cyan-600 to-cyan-600/80 px-4 py-3 text-white">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-extrabold">🕒 Recentes</div>
+        <span class="rounded-full bg-white/20 px-2.5 py-1 text-xs font-extrabold">
+          {{ topicos_recentes_sidebar|length if topicos_recentes_sidebar else 0 }}
+        </span>
+      </div>
+      <div class="mt-1 text-[11px] font-semibold text-white/75">Últimos tópicos criados</div>
+    </div>
+
+    <div class="p-2">
+      {% if topicos_recentes_sidebar %}
+        <div class="divide-y divide-slate-200">
+          {% for t in topicos_recentes_sidebar %}
+            <a href="{{ url_for('forum.topico_detalhe', topico_id=t.id, slug=t.url_slug) }}"
+               class="group flex items-start justify-between gap-2 rounded-2xl p-2.5 transition hover:bg-slate-50
+                      {% if t.id == topico_atual_id %}bg-sky-50 ring-2 ring-sky-200{% endif %}">
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-extrabold text-slate-900 group-hover:text-sky-700">
+                  {{ t.titulo }}
+                </div>
+                <div class="mt-1 flex items-center gap-2.5 text-[11px] font-semibold text-slate-500">
+                  <span>💬 {{ t.comentarios_count or 0 }}</span>
+                  <span>👁️ {{ t.visualizacoes or 0 }}</span>
+                </div>
+              </div>
+              <div class="shrink-0 text-slate-400 opacity-0 transition group-hover:opacity-100">→</div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="p-4 text-center text-xs font-semibold text-slate-500">
+          Nenhum tópico recente
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Mais comentados -->
+  <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-soft">
+    <div class="bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-3 text-white">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-extrabold">🔥 Mais comentados</div>
+        <span class="rounded-full bg-white/20 px-2.5 py-1 text-xs font-extrabold">
+          {{ topicos_comentados_sidebar|length if topicos_comentados_sidebar else 0 }}
+        </span>
+      </div>
+      <div class="mt-1 text-[11px] font-semibold text-white/80">Threads com mais atividade</div>
+    </div>
+
+    <div class="p-2">
+      {% if topicos_comentados_sidebar %}
+        <div class="divide-y divide-slate-200">
+          {% for t in topicos_comentados_sidebar %}
+            <a href="{{ url_for('forum.topico_detalhe', topico_id=t.id, slug=t.url_slug) }}"
+               class="group flex items-start justify-between gap-2 rounded-2xl p-2.5 transition hover:bg-amber-50/40
+                      {% if t.id == topico_atual_id %}bg-amber-50 ring-2 ring-amber-200{% endif %}">
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-extrabold text-slate-900 group-hover:text-amber-700">
+                  #{{ loop.index }} {{ t.titulo }}
+                </div>
+                <div class="mt-1 flex items-center gap-2.5 text-[11px] font-semibold text-slate-600">
+                  <span class="rounded-full bg-amber-100 px-2 py-0.5 font-extrabold text-amber-900">
+                    💬 {{ t.comentarios_count or 0 }}
+                  </span>
+                  <span>👁️ {{ t.visualizacoes or 0 }}</span>
+                  {% if (t.comentarios_count or 0) > 0 %}
+                    <span class="rounded-full bg-rose-100 px-2 py-0.5 font-extrabold text-rose-700">HOT</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="shrink-0 text-slate-400 opacity-0 transition group-hover:opacity-100">→</div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="p-4 text-center text-xs font-semibold text-slate-500">
+          Nenhum tópico comentado
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+</div>

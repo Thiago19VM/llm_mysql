@@ -1,0 +1,349 @@
+<!-- templates/funcionario/adicionar_livro.html -->
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Adicionar novo Livro • LiteraWEB</title>
+
+  <!-- CSS base do painel -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel.css') }}">
+  <!-- CSS específico desta tela -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/adicionar_livro.css') }}">
+</head>
+
+<body class="page-livros-add">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
+    <div class="side-head">
+      <a class="brand" href="{{ url_for('funcionario.painel') }}">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}"
+        class="brand__logo">
+        <span class="brand__name">LiteraWEB</span>
+      </a>
+
+      <button class="icon-btn side-close" type="button" aria-label="Fechar menu" onclick="toggleSidebar(false)">
+        ✕
+      </button>
+    </div>
+
+    <nav class="side-nav" aria-label="Navegação do funcionário">
+      <a class="side-link {% if request.endpoint == 'funcionario.painel' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.painel') }}">
+        <span class="side-ico" aria-hidden="true">🏠</span>
+        <span>Painel de Controle</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.livros' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.livros') }}">
+        <span class="side-ico" aria-hidden="true">📚</span>
+        <span>Livros</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.reservas' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.reservas') }}">
+        <span class="side-ico" aria-hidden="true">🗓️</span>
+        <span>Reservas</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.usuarios' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.usuarios') }}">
+        <span class="side-ico" aria-hidden="true">👤</span>
+        <span>Usuários</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario_rag.painel_rag' %}is-active{% endif %}"
+           href="{{ url_for('funcionario_rag.painel_rag') }}">
+          <span class="side-ico" aria-hidden="true">🤖</span>
+          <span>Assistente Inteligente</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.politicas_emprestimo' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.politicas_emprestimo') }}">
+        <span class="side-ico" aria-hidden="true">🛡️</span>
+        <span>Políticas do Sistema</span>
+      </a>
+
+      <div class="side-sep"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-avatar" aria-hidden="true"></div>
+        <div class="side-user__meta">
+          <div class="side-user__name">{{ session.get("funcionario_nome", "Funcionário") }}</div>
+          <div class="side-user__role">Acesso interno</div>
+        </div>
+      </div>
+
+      <a class="side-logout" href="{{ url_for('auth.sair') }}">
+        <span aria-hidden="true">↩</span> Sair
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" aria-label="Abrir menu" onclick="toggleSidebar(true)">☰</button>
+
+      <div class="welcome">
+        <div class="welcome__title">Adicionar novo Livro</div>
+        <div class="welcome__sub">
+          {{ data_hoje }} • {{ hora_agora }}
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="chip-role">Acesso interno</div>
+
+        <button class="user-pill" type="button" aria-label="Menu do usuário">
+          <span class="user-pill__avatar" aria-hidden="true"></span>
+          <span class="user-pill__name">{{ session.get("funcionario_nome", "Funcionário") }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="content-inner">
+
+        <!-- IMPORTAR CSV -->
+        <section class="panel panel-form" aria-label="Importar livros via CSV" style="margin-bottom:14px;">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <div>
+              <div style="font-weight:950; color:#233553;">Importar CSV</div>
+              <div style="color:var(--muted); font-weight:800; font-size:12px;">
+                Envie um arquivo .csv com colunas como: <strong>titulo</strong>, <strong>autor</strong>, genero, ano, edicao, quantidade, localizacao...
+              </div>
+            </div>
+
+            <a class="btn btn-ghost" href="{{ url_for('static', filename='modelos/import_livros.csv') }}" download>
+              Baixar modelo CSV
+            </a>
+          </div>
+
+          <form
+            method="post"
+            action="{{ url_for('funcionario.importar_livros_csv') }}"
+            enctype="multipart/form-data"
+            style="margin-top:12px; display:flex; gap:10px; align-items:end; flex-wrap:wrap;"
+          >
+            <div class="field" style="min-width:320px;">
+              <label for="csv_file">Arquivo (.csv)</label>
+              <input id="csv_file" name="csv_file" type="file" accept=".csv,text/csv" required>
+              <small class="help">Dica: se o Excel exportar com “;”, a importação também funciona.</small>
+            </div>
+
+            <label class="chk" for="csv_header" style="display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:800; color:#233553;">
+              <input id="csv_header" name="csv_header" type="checkbox" value="1" checked>
+              CSV tem cabeçalho
+            </label>
+
+            <button class="btn btn-secondary" type="submit">Importar</button>
+          </form>
+        </section>
+
+        <!-- CARD principal -->
+        <section class="panel panel-form" aria-label="Formulário de cadastro de livro">
+          <form method="post" action="{{ url_for('funcionario.adicionar_livro_post') }}" enctype="multipart/form-data">
+            <!-- Linha 1 -->
+            <div class="form-grid">
+              <div class="field">
+                <label for="titulo">Título</label>
+                <input
+                  id="titulo"
+                  name="titulo"
+                  type="text"
+                  placeholder="Ex: Dom Casmurro"
+                  value="{{ request.form.get('titulo','') if request is defined else '' }}"
+                >
+              </div>
+
+              <div class="field">
+                <label for="autor">Autor</label>
+                <input
+                  id="autor"
+                  name="autor"
+                  type="text"
+                  placeholder="Ex: Machado de Assis"
+                  value="{{ request.form.get('autor','') if request is defined else '' }}"
+                >
+              </div>
+
+              <div class="field">
+                <label for="edit_genero">Gênero</label>
+                <select id="edit_genero" name="genero" class="f-select">
+                    <option value="">Selecione</option>
+                    <option value="acao">Ação</option>
+                    <option value="aventura">Aventura</option>
+                    <option value="autoajuda">Autoajuda / Desenvolvimento pessoal</option>
+                    <option value="biografia">Biografia / Autobiografia</option>
+                    <option value="ciencia">Ciência / Divulgação científica</option>
+                    <option value="classicos">Clássicos</option>
+                    <option value="conto">Contos</option>
+                    <option value="culinaria">Culinária</option>
+                    <option value="direito">Direito</option>
+                    <option value="drama">Drama</option>
+                    <option value="educacao">Educação</option>
+                    <option value="fantasia">Fantasia</option>
+                    <option value="ficcao">Ficção</option>
+                    <option value="ficcao_cientifica">Ficção Científica</option>
+                    <option value="filosofia">Filosofia</option>
+                    <option value="historia">História</option>
+                    <option value="hq">HQ</option>
+                    <option value="infantil">Infantil</option>
+                    <option value="juvenil">Juvenil (YA)</option>
+                    <option value="manga">Mangá</option>
+                    <option value="misterio">Mistério</option>
+                    <option value="negocios">Negócios / Administração</option>
+                    <option value="nao_ficcao">Não ficção</option>
+                    <option value="poesia">Poesia</option>
+                    <option value="psicologia">Psicologia</option>
+                    <option value="religiao">Religião / Espiritualidade</option>
+                    <option value="romance">Romance</option>
+                    <option value="suspense">Suspense</option>
+                    <option value="tecnologia">Tecnologia / Computação</option>
+                    <option value="terror">Terror</option>
+                    <option value="thriller">Thriller</option>
+                </select>
+              </div>
+
+              <!-- Linha 2 -->
+              <div class="field">
+                <label for="editora">Editora</label>
+                <input
+                  id="editora"
+                  name="editora"
+                  type="text"
+                  placeholder="Ex: Companhia das Letras"
+                  value="{{ request.form.get('editora','') if request is defined else '' }}"
+                >
+              </div>
+
+              <div class="field">
+                <label for="ano">Ano</label>
+                <input
+                  id="ano"
+                  name="ano"
+                  type="number"
+                  min="1000"
+                  max="2100"
+                  placeholder="Ex: 2010"
+                  value="{{ request.form.get('ano','') if request is defined else '' }}"
+                >
+              </div>
+
+              <div class="field">
+                <label for="isbn">ISBN</label>
+                <input
+                  id="isbn"
+                  name="isbn"
+                  type="text"
+                  placeholder="Ex: 978..."
+                  value="{{ request.form.get('isbn','') if request is defined else '' }}"
+                >
+              </div>
+            </div>
+
+            <!-- Corpo: sinopse + coluna direita -->
+            <div class="form-body">
+              <div class="field field-sinopse">
+                <label for="sinopse">Sinopse</label>
+                <textarea
+                  id="sinopse"
+                  name="sinopse"
+                  placeholder="Escreva..."
+                >{{ request.form.get('sinopse','') if request is defined else '' }}</textarea>
+              </div>
+
+              <div class="side-col">
+                <div class="field">
+                  <label for="formato">Formato</label>
+                  <select id="formato" name="tipo_capa">
+                    <option value="" selected disabled>Selecione</option>
+                    <option value="Capa Comum">Capa Comum</option>
+                    <option value="Livro de Bolso">Livro de Bolso</option>
+                  </select>
+                </div>
+
+                  <div class="field">
+                    <label for="edicao">Edição</label>
+                    <input id="edicao" name="edicao" type="text" placeholder="Ex: 2, 3, 2 revisada">
+                  </div>
+
+                <div class="field">
+                  <label for="quantidade">Quantidade de exemplares disponíveis</label>
+                  <input
+                    id="quantidade"
+                    name="quantidade"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value="{{ request.form.get('quantidade','') if request is defined else '' }}"
+                  >
+                </div>
+
+                <!-- Localização -->
+                <div class="field">
+                  <label for="localizacao">Localização (ex.: Prateleira A)</label>
+                  <input
+                    id="localizacao"
+                    name="localizacao"
+                    type="text"
+                    placeholder="Ex.: Estante 2 • Prateleira A"
+                    value="{{ request.form.get('localizacao','') if request is defined else '' }}"
+                  >
+                  <small class="help">Opcional. Você pode alterar depois por exemplar.</small>
+                </div>
+
+                <div class="field field-capa">
+                  <label for="capa">Carregar capa</label>
+                  <input id="capa" name="capa" type="file" accept="image/*">
+                  <small class="help">PNG, JPG ou WEBP (opcional)</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="form-actions">
+              <a class="btn btn-ghost" href="{{ url_for('funcionario.livros') }}">← Voltar</a>
+
+              <div class="actions-right">
+                <button class="btn btn-primary" type="submit">
+                  ✔ Salvar
+                </button>
+
+                <button class="btn btn-danger" type="reset">
+                  🗑 Limpar
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Backdrop mobile -->
+  <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const backdrop = document.getElementById("backdrop");
+
+    function toggleSidebar(open){
+      document.body.classList.toggle("side-open", !!open);
+      if (backdrop) backdrop.style.display = open ? "block" : "none";
+    }
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 980) {
+        if (backdrop) backdrop.style.display = "none";
+        document.body.classList.remove("side-open");
+      }
+    });
+  </script>
+</body>
+</html>

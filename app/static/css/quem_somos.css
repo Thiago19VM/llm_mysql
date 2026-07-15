@@ -1,0 +1,56 @@
+/* Cards com borda em degradê e “glass” */
+.qs-card{
+  position: relative;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(56,189,248,.45),
+    rgba(255,255,255,.25),
+    rgba(99,102,241,.35)
+  );
+  box-shadow: 0 10px 26px rgba(10,15,25,.06);
+  overflow: hidden;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.qs-card::before{
+  content:"";
+  position:absolute;
+  inset:1px;
+  border-radius: 15px;
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(148,163,184,.35);
+  z-index: 0;
+}
+
+.qs-card > *{
+  position: relative;
+  z-index: 1;
+}
+
+.qs-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 45px rgba(10,15,25,.10);
+}
+
+/* Painel com o mesmo estilo (borda degradê + inner wrapper) */
+.qs-panel{
+  position: relative;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(56,189,248,.45),
+    rgba(255,255,255,.25),
+    rgba(99,102,241,.35)
+  );
+  box-shadow: 0 18px 45px rgba(10,15,25,.10);
+  overflow: hidden;
+}
+
+.qs-panel__inner{
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  border: 1px solid rgba(148,163,184,.35);
+}

@@ -1,0 +1,676 @@
+{% extends "base.html" %}
+{% block title %}Moderação do Fórum • LiteraWEB{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="grid gap-5 lg:grid-cols-12">
+
+    <!-- COLUNA PRINCIPAL -->
+    <div class="lg:col-span-8 space-y-5">
+
+      <!-- TOPO COMPACTO -->
+      <section class="space-y-4">
+        <div class="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-extrabold text-sky-700">
+              <span class="h-2 w-2 rounded-full bg-sky-500"></span>
+              Painel de Moderação
+            </div>
+
+            <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Moderação do Fórum
+            </h1>
+
+            <p class="mt-1 text-sm font-semibold text-slate-500 sm:text-base">
+              Gerencie tópicos, acompanhe o histórico das ações e mantenha a comunidade organizada.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <a href="{{ url_for('forum.lista_topicos') }}"
+               class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+              ← Voltar ao fórum
+            </a>
+          </div>
+        </div>
+
+        <!-- CARDS -->
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <article class="group relative overflow-hidden rounded-3xl border border-emerald-200/70 bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-md">
+            <div class="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-emerald-100/70 blur-2xl"></div>
+            <div class="relative flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-wider text-emerald-700/70">
+                  Ativos
+                </p>
+                <h2 class="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  {{ stats.ativos }}
+                </h2>
+                <p class="mt-1 text-xs font-semibold text-slate-500">
+                  tópicos visíveis no fórum
+                </p>
+              </div>
+
+              <div class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-xl shadow-sm ring-1 ring-emerald-100">
+                ✅
+              </div>
+            </div>
+          </article>
+
+          <article class="group relative overflow-hidden rounded-3xl border border-amber-200/70 bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-md">
+            <div class="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-amber-100/70 blur-2xl"></div>
+            <div class="relative flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-wider text-amber-700/70">
+                  Ocultos
+                </p>
+                <h2 class="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  {{ stats.ocultos }}
+                </h2>
+                <p class="mt-1 text-xs font-semibold text-slate-500">
+                  tópicos removidos da exibição
+                </p>
+              </div>
+
+              <div class="grid h-12 w-12 place-items-center rounded-2xl bg-amber-50 text-xl shadow-sm ring-1 ring-amber-100">
+                🙈
+              </div>
+            </div>
+          </article>
+
+          <article class="group relative overflow-hidden rounded-3xl border border-rose-200/70 bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-md">
+            <div class="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-rose-100/70 blur-2xl"></div>
+            <div class="relative flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-wider text-rose-700/70">
+                  Excluídos
+                </p>
+                <h2 class="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  {{ stats.excluidos }}
+                </h2>
+                <p class="mt-1 text-xs font-semibold text-slate-500">
+                  tópicos marcados como excluídos
+                </p>
+              </div>
+
+              <div class="grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-xl shadow-sm ring-1 ring-rose-100">
+                🗑️
+              </div>
+            </div>
+          </article>
+
+          <article class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-md">
+            <div class="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-slate-100/70 blur-2xl"></div>
+            <div class="relative flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+                  Trancados
+                </p>
+                <h2 class="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  {{ stats.trancados }}
+                </h2>
+                <p class="mt-1 text-xs font-semibold text-slate-500">
+                  tópicos bloqueados para interação
+                </p>
+              </div>
+
+              <div class="grid h-12 w-12 place-items-center rounded-2xl bg-slate-50 text-xl shadow-sm ring-1 ring-slate-200">
+                🔒
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- FILTROS -->
+      <section class="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-soft sm:p-5">
+        <form method="get" action="{{ url_for('forum.painel_moderacao_forum') }}" class="space-y-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="flex-1 space-y-1.5">
+              <label class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Buscar</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+                <input
+                  type="text"
+                  name="q"
+                  value="{{ q }}"
+                  placeholder="Buscar por título ou conteúdo..."
+                  autocomplete="off"
+                  class="w-full rounded-2xl border border-slate-200 bg-white px-9 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+                >
+              </div>
+            </div>
+
+            <div class="w-full space-y-1.5 sm:w-56">
+              <label class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Status</label>
+              <select
+                name="aba"
+                class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+              >
+                <option value="ativos" {{ 'selected' if aba == 'ativos' else '' }}>Ativos</option>
+                <option value="ocultos" {{ 'selected' if aba == 'ocultos' else '' }}>Ocultos</option>
+                <option value="excluidos" {{ 'selected' if aba == 'excluidos' else '' }}>Excluídos</option>
+                <option value="trancados" {{ 'selected' if aba == 'trancados' else '' }}>Trancados</option>
+                <option value="todos" {{ 'selected' if aba == 'todos' else '' }}>Todos</option>
+              </select>
+            </div>
+
+            <div class="flex gap-2">
+              <button type="submit"
+                      class="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-sky-800">
+                🎛️ Filtrar
+              </button>
+
+              {% if q or (aba and aba != 'ativos') %}
+                <a href="{{ url_for('forum.painel_moderacao_forum') }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold text-slate-500 hover:bg-slate-100">
+                  ✖ Limpar
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            {% set tabs = [
+              ('ativos','Ativos','✅'),
+              ('ocultos','Ocultos','🙈'),
+              ('excluidos','Excluídos','🗑️'),
+              ('trancados','Trancados','🔒'),
+              ('todos','Todos','📚')
+            ] %}
+
+            {% for key,label,icon in tabs %}
+              {% set active = (aba == key) %}
+              <a href="{{ url_for('forum.painel_moderacao_forum', aba=key, q=q) }}"
+                 class="rounded-full border px-3.5 py-1.5 text-xs font-extrabold transition
+                        {{ 'border-sky-700 bg-sky-700 text-white shadow-sm' if active else 'border-slate-300/70 text-slate-700 hover:bg-slate-50' }}">
+                {{ icon }} {{ label }}
+              </a>
+            {% endfor %}
+          </div>
+        </form>
+      </section>
+
+      <!-- LISTA -->
+      <section class="space-y-3">
+        {% if topicos.items %}
+          {% for topico in topicos.items %}
+            {% set border_color = 'border-l-emerald-500' %}
+            {% if topico.excluido %}
+              {% set border_color = 'border-l-rose-500' %}
+            {% elif topico.oculto %}
+              {% set border_color = 'border-l-amber-500' %}
+            {% elif topico.trancado %}
+              {% set border_color = 'border-l-slate-700' %}
+            {% endif %}
+
+            <article class="rounded-3xl border border-slate-200/70 border-l-4 {{ border_color }} bg-white/90 p-4 shadow-soft transition hover:bg-white hover:shadow-md">
+              <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="text-lg font-extrabold text-slate-900">
+                        {{ topico.titulo }}
+                      </h3>
+
+                      {% if topico.fixado %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-extrabold text-amber-800">
+                          📌 Fixado
+                        </span>
+                      {% endif %}
+                      {% if topico.excluido %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-extrabold text-rose-800">
+                          🗑️ Excluído
+                        </span>
+                      {% endif %}
+                      {% if topico.oculto %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-extrabold text-amber-800">
+                          🙈 Oculto
+                        </span>
+                      {% endif %}
+                      {% if topico.trancado %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-700">
+                          🔒 Trancado
+                        </span>
+                      {% endif %}
+                      {% if not topico.excluido and not topico.oculto %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700">
+                          ✅ Visível
+                        </span>
+                      {% endif %}
+                    </div>
+
+                    <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
+                      <span>
+                        <strong>Autor:</strong>
+                        {% if topico.autor and topico.autor.nome_usuario %}
+                          {{ topico.autor.nome_usuario }}
+                        {% else %}
+                          Usuário
+                        {% endif %}
+                      </span>
+                      <span>🕒 {{ topico.criado_em|dtbr if topico.criado_em else '-' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap gap-2">
+                    <a class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50"
+                       href="{{ url_for('forum.topico_detalhe', topico_id=topico.id, slug=topico.url_slug) }}">
+                      Ver tópico
+                    </a>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200/70 bg-slate-50/70 px-4 py-3 text-sm font-semibold text-slate-600">
+                  {{ (topico.conteudo or '')[:280] }}{% if topico.conteudo and topico.conteudo|length > 280 %}...{% endif %}
+                </div>
+
+                <div class="rounded-2xl border border-slate-200/70 bg-white px-4 py-3">
+                  <div class="mb-2 text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                    Histórico de motivos
+                  </div>
+
+                  <div class="space-y-2 text-sm font-semibold text-slate-600">
+                    {% if topico.motivo_ocultacao %}
+                      <p><strong class="text-slate-800">Último motivo de ocultação:</strong> {{ topico.motivo_ocultacao }}</p>
+                    {% endif %}
+                    {% if topico.motivo_exclusao %}
+                      <p><strong class="text-slate-800">Último motivo de exclusão:</strong> {{ topico.motivo_exclusao }}</p>
+                    {% endif %}
+                    {% if topico.motivo_trancamento %}
+                      <p><strong class="text-slate-800">Último motivo de trancamento:</strong> {{ topico.motivo_trancamento }}</p>
+                    {% endif %}
+
+                    {% if not topico.motivo_ocultacao and not topico.motivo_exclusao and not topico.motivo_trancamento %}
+                      <p class="text-slate-500">Nenhum motivo registrado para este tópico até o momento.</p>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 pt-1">
+                  {% if not topico.excluido and not topico.oculto %}
+                    <button type="button"
+                            class="js-open-modal inline-flex items-center justify-center rounded-2xl bg-amber-500 px-4 py-2 text-sm font-extrabold text-white hover:bg-amber-600"
+                            data-action="{{ url_for('forum.moderacao_ocultar_topico', topico_id=topico.id) }}"
+                            data-title="Ocultar tópico"
+                            data-submit-label="Confirmar ocultação"
+                            data-aba="{{ aba }}"
+                            data-q="{{ q }}"
+                            data-require-reason="true">
+                      Ocultar
+                    </button>
+                  {% endif %}
+
+                  {% if topico.oculto and not topico.excluido %}
+                    <button type="button"
+                            class="js-open-modal inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-emerald-700"
+                            data-action="{{ url_for('forum.moderacao_desocultar_topico', topico_id=topico.id) }}"
+                            data-title="Desocultar tópico"
+                            data-submit-label="Confirmar restauração"
+                            data-aba="{{ aba }}"
+                            data-q="{{ q }}"
+                            data-require-reason="false">
+                      Desocultar
+                    </button>
+                  {% endif %}
+
+                  {% if not topico.excluido %}
+                    <button type="button"
+                            class="js-open-modal inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-rose-700"
+                            data-action="{{ url_for('forum.moderacao_excluir_topico', topico_id=topico.id) }}"
+                            data-title="Excluir tópico"
+                            data-submit-label="Confirmar exclusão"
+                            data-aba="{{ aba }}"
+                            data-q="{{ q }}"
+                            data-require-reason="true">
+                      Excluir
+                    </button>
+                  {% endif %}
+
+                  {% if topico.excluido %}
+                    <button type="button"
+                            class="js-open-modal inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-emerald-700"
+                            data-action="{{ url_for('forum.moderacao_restaurar_topico', topico_id=topico.id) }}"
+                            data-title="Restaurar tópico"
+                            data-submit-label="Confirmar restauração"
+                            data-aba="{{ aba }}"
+                            data-q="{{ q }}"
+                            data-require-reason="false">
+                      Restaurar
+                    </button>
+                  {% endif %}
+
+                  {% if not topico.excluido and not topico.trancado %}
+                    <button type="button"
+                            class="js-open-modal inline-flex items-center justify-center rounded-2xl bg-slate-800 px-4 py-2 text-sm font-extrabold text-white hover:bg-slate-900"
+                            data-action="{{ url_for('forum.moderacao_trancar_topico', topico_id=topico.id) }}"
+                            data-title="Trancar tópico"
+                            data-submit-label="Confirmar trancamento"
+                            data-aba="{{ aba }}"
+                            data-q="{{ q }}"
+                            data-require-reason="true">
+                      Trancar
+                    </button>
+                  {% endif %}
+
+                  {% if not topico.excluido and topico.trancado %}
+                    <button type="button"
+                            class="js-open-modal inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50"
+                            data-action="{{ url_for('forum.moderacao_destrancar_topico', topico_id=topico.id) }}"
+                            data-title="Destrancar tópico"
+                            data-submit-label="Confirmar destrancamento"
+                            data-aba="{{ aba }}"
+                            data-q="{{ q }}"
+                            data-require-reason="false">
+                      Destrancar
+                    </button>
+                  {% endif %}
+
+                  {% if not topico.excluido %}
+                    <button type="button"
+                            class="js-open-modal inline-flex items-center justify-center rounded-2xl bg-sky-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-sky-800"
+                            data-action="{{ url_for('forum.moderacao_toggle_fixar', topico_id=topico.id) }}"
+                            data-title="{% if topico.fixado %}Desafixar tópico{% else %}Fixar tópico{% endif %}"
+                            data-submit-label="{% if topico.fixado %}Confirmar desafixação{% else %}Confirmar fixação{% endif %}"
+                            data-aba="{{ aba }}"
+                            data-q="{{ q }}"
+                            data-require-reason="false">
+                      {% if topico.fixado %}Desafixar{% else %}Fixar{% endif %}
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+
+          {% if topicos.pages > 1 %}
+            <div class="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-soft">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="text-xs font-extrabold text-slate-600">
+                  Página {{ topicos.page }} de {{ topicos.pages }}
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  {% if topicos.has_prev %}
+                    <a href="{{ url_for('forum.painel_moderacao_forum', aba=aba, q=q, page=topicos.prev_num) }}"
+                       class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                      ← Anterior
+                    </a>
+                  {% else %}
+                    <span class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-400">
+                      ← Anterior
+                    </span>
+                  {% endif %}
+
+                  {% if topicos.has_next %}
+                    <a href="{{ url_for('forum.painel_moderacao_forum', aba=aba, q=q, page=topicos.next_num) }}"
+                       class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">
+                      Próxima →
+                    </a>
+                  {% else %}
+                    <span class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-400">
+                      Próxima →
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-soft">
+            <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-2xl">
+              🛡️
+            </div>
+            <h3 class="mt-4 text-lg font-extrabold text-slate-900">Nenhum tópico encontrado</h3>
+            <p class="mt-2 text-sm font-semibold text-slate-600">
+              Não há resultados para este filtro no painel de moderação.
+            </p>
+            <div class="mt-4 flex justify-center gap-2">
+              <a href="{{ url_for('forum.painel_moderacao_forum') }}"
+                 class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+                Limpar filtros
+              </a>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="lg:col-span-4">
+      <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-soft">
+        <div class="border-b border-slate-200 bg-slate-50/80 px-5 py-4">
+          <h2 class="text-lg font-extrabold text-slate-900">Histórico de Moderação</h2>
+          <p class="mt-1 text-sm font-semibold text-slate-500">
+            Últimas ações registradas no fórum.
+          </p>
+        </div>
+
+        <div class="max-h-[900px] space-y-3 overflow-y-auto p-4">
+          {% for log in logs %}
+            <article class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-3">
+                <strong class="text-sm font-extrabold text-slate-900">
+                  {{ log.acao|capitalize }}
+                </strong>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                  {{ log.criado_em|dtbr if log.criado_em else '-' }}
+                </span>
+              </div>
+
+              <p class="mt-2 text-sm font-extrabold text-slate-800">
+                {{ log.topico.titulo if log.topico else 'Tópico removido' }}
+              </p>
+
+              <div class="mt-2 space-y-1 text-xs font-semibold text-slate-500">
+                <p>
+                  <strong>Moderador:</strong>
+                  {% if log.moderador and log.moderador.nome %}
+                    {{ log.moderador.nome }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </p>
+                <p>
+                  <strong>Autor:</strong>
+                  {% if log.autor and log.autor.nome_usuario %}
+                    {{ log.autor.nome_usuario }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </p>
+              </div>
+
+              <div class="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+                {{ log.motivo or 'Sem motivo informado.' }}
+              </div>
+
+              {% if log.detalhes %}
+                <div class="mt-2 text-xs font-semibold text-slate-500">
+                  {{ log.detalhes }}
+                </div>
+              {% endif %}
+            </article>
+          {% else %}
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center">
+              <div class="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white text-xl shadow-sm">
+                📝
+              </div>
+              <h3 class="mt-3 text-sm font-extrabold text-slate-800">Sem ações registradas</h3>
+              <p class="mt-1 text-xs font-semibold text-slate-500">
+                Ainda não há histórico de moderação disponível.
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="moderationModal"
+     class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+  <div class="w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-5 py-4">
+      <div>
+        <h3 id="modalTitle" class="text-lg font-extrabold text-slate-900">Ação de moderação</h3>
+        <p class="text-sm font-semibold text-slate-500">Confirme a ação e registre o motivo.</p>
+      </div>
+
+      <button type="button"
+              id="closeModerationModal"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+        ✕
+      </button>
+    </div>
+
+    <form method="post" id="moderationForm" action="" class="space-y-4 p-5">
+      <input type="hidden" name="aba" id="modalAba" value="{{ aba }}">
+      <input type="hidden" name="q" id="modalQ" value="{{ q }}">
+      <input type="hidden" name="page" id="modalPage" value="{{ topicos.page if topicos and topicos.page else 1 }}">
+
+      <div class="space-y-2">
+        <label for="modalMotivo" class="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+          Motivo da ação
+        </label>
+        <textarea
+          name="motivo"
+          id="modalMotivo"
+          rows="5"
+          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+          placeholder="Explique claramente o motivo da ação de moderação..."
+        ></textarea>
+      </div>
+
+      <div class="flex flex-wrap justify-end gap-2 pt-2">
+        <button type="button"
+                id="cancelModerationModal"
+                class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 hover:bg-slate-50">
+          Cancelar
+        </button>
+
+        <button type="submit"
+                id="confirmModerationBtn"
+                class="inline-flex items-center justify-center rounded-2xl bg-sky-700 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-sky-800">
+          Confirmar ação
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const modal = document.getElementById("moderationModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const moderationForm = document.getElementById("moderationForm");
+    const modalAba = document.getElementById("modalAba");
+    const modalQ = document.getElementById("modalQ");
+    const modalPage = document.getElementById("modalPage");
+    const modalMotivo = document.getElementById("modalMotivo");
+    const confirmModerationBtn = document.getElementById("confirmModerationBtn");
+    const closeBtn = document.getElementById("closeModerationModal");
+    const cancelBtn = document.getElementById("cancelModerationModal");
+
+    if (!modal || !modalTitle || !moderationForm || !modalAba || !modalQ || !modalPage || !modalMotivo || !confirmModerationBtn) {
+      return;
+    }
+
+    let requireReason = true;
+
+    function openModerationModal(action, title, submitLabel, aba, q, page, reasonRequired) {
+      if (!action || !action.trim()) return;
+
+      requireReason = reasonRequired;
+      moderationForm.setAttribute("action", action);
+      modalTitle.textContent = title || "Ação de moderação";
+      confirmModerationBtn.textContent = submitLabel || "Confirmar ação";
+      modalAba.value = aba || "ativos";
+      modalQ.value = q || "";
+      modalPage.value = page || "{{ topicos.page if topicos and topicos.page else 1 }}";
+
+      modalMotivo.value = "";
+      modalMotivo.required = requireReason;
+      modalMotivo.placeholder = requireReason
+        ? "Explique claramente o motivo da ação de moderação..."
+        : "Motivo opcional para registrar no histórico...";
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      document.body.classList.add("overflow-hidden");
+
+      setTimeout(() => {
+        modalMotivo.focus();
+      }, 30);
+    }
+
+    function closeModerationModal() {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      document.body.classList.remove("overflow-hidden");
+
+      moderationForm.reset();
+      moderationForm.setAttribute("action", "");
+      modalAba.value = "{{ aba }}";
+      modalQ.value = {{ q|tojson }};
+      modalPage.value = "{{ topicos.page if topicos and topicos.page else 1 }}";
+      modalMotivo.required = false;
+      confirmModerationBtn.disabled = false;
+      confirmModerationBtn.textContent = "Confirmar ação";
+    }
+
+    closeModerationModal();
+
+    document.querySelectorAll(".js-open-modal").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        openModerationModal(
+          btn.dataset.action,
+          btn.dataset.title,
+          btn.dataset.submitLabel,
+          btn.dataset.aba,
+          btn.dataset.q,
+          "{{ topicos.page if topicos and topicos.page else 1 }}",
+          btn.dataset.requireReason === "true"
+        );
+      });
+    });
+
+    if (closeBtn) closeBtn.addEventListener("click", closeModerationModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeModerationModal);
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        closeModerationModal();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeModerationModal();
+      }
+    });
+
+    moderationForm.addEventListener("submit", function (e) {
+      const action = moderationForm.getAttribute("action");
+      const motivo = (modalMotivo.value || "").trim();
+
+      if (!action || !action.trim()) {
+        e.preventDefault();
+        return;
+      }
+
+      if (requireReason && !motivo) {
+        e.preventDefault();
+        modalMotivo.focus();
+        return;
+      }
+
+      confirmModerationBtn.disabled = true;
+      confirmModerationBtn.textContent = "Enviando...";
+    });
+  })();
+</script>
+{% endblock %}

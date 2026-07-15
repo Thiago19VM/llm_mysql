@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel do Funcionário • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel.css') }}">
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
+    <div class="side-head">
+      <a class="brand" href="{{ url_for('funcionario.painel') }}">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}"
+        class="brand__logo">
+        <span class="brand__name">LiteraWEB</span>
+      </a>
+
+      <button class="icon-btn side-close" type="button" aria-label="Fechar menu" onclick="toggleSidebar(false)">
+        ✕
+      </button>
+    </div>
+
+    <nav class="side-nav" aria-label="Navegação do funcionário">
+      <a class="side-link {% if request.endpoint == 'funcionario.painel' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.painel') }}">
+        <span class="side-ico" aria-hidden="true">🏠</span>
+        <span>Painel de Controle</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.livros' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.livros') }}">
+        <span class="side-ico" aria-hidden="true">📚</span>
+        <span>Livros</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.reservas' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.reservas') }}">
+        <span class="side-ico" aria-hidden="true">🗓️</span>
+        <span>Reservas</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.usuarios' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.usuarios') }}">
+        <span class="side-ico" aria-hidden="true">👤</span>
+        <span>Usuários</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario_rag.painel_rag' %}is-active{% endif %}"
+           href="{{ url_for('funcionario_rag.painel_rag') }}">
+          <span class="side-ico" aria-hidden="true">🤖</span>
+          <span>Assistente Inteligente</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.politicas_emprestimo' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.politicas_emprestimo') }}">
+        <span class="side-ico" aria-hidden="true">🛡️</span>
+        <span>Políticas do Sistema</span>
+      </a>
+
+      <div class="side-sep"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-avatar" aria-hidden="true"></div>
+        <div class="side-user__meta">
+          <div class="side-user__name">{{ session.get("funcionario_nome", "Funcionário") }}</div>
+          <div class="side-user__role">Acesso interno</div>
+        </div>
+      </div>
+
+      <a class="side-logout" href="{{ url_for('auth.sair') }}">
+        <span aria-hidden="true">↩</span> Sair
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" aria-label="Abrir menu" onclick="toggleSidebar(true)">
+        ☰
+      </button>
+
+      <div class="welcome">
+        <div class="welcome__title">Bem-vindo</div>
+        <div class="welcome__sub" id="painelHorario">
+          {{ data_hoje or "—" }} • {{ hora_agora or "—" }}
+        </div>
+      </div>
+
+      <div class="top-actions">
+
+          <a class="forum-btn" href="{{ url_for('forum.lista_topicos') }}">
+            <span class="forum-btn__ico" aria-hidden="true">💬</span>
+            <span>Ir para o Fórum</span>
+          </a>
+
+        <button class="user-pill" type="button" aria-label="Menu do usuário">
+          <span class="user-pill__avatar" aria-hidden="true"></span>
+          <span class="user-pill__name">{{ session.get("funcionario_nome", "Funcionário") }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="content-inner">
+
+        <!-- Stats cards -->
+        <section class="stats" aria-label="Indicadores">
+          <article class="stat-card">
+            <div class="stat-ico stat-ico--books" aria-hidden="true">📚</div>
+            <div class="stat-meta">
+              <div class="stat-label">Total de Livros</div>
+              <div class="stat-value" id="statTotalLivros">{{ total_livros or 0 }}</div>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-ico stat-ico--users" aria-hidden="true">🟢</div>
+            <div class="stat-meta">
+              <div class="stat-label">Usuários Online</div>
+              <div class="stat-value" id="statUsuariosOnline">{{ usuarios_online or 0 }}</div>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-ico stat-ico--reservas" aria-hidden="true">🔒</div>
+            <div class="stat-meta">
+              <div class="stat-label">Reservas Ativas</div>
+              <div class="stat-value" id="statReservasAtivas">{{ reservas_ativas or 0 }}</div>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-ico stat-ico--disp" aria-hidden="true">📕</div>
+            <div class="stat-meta">
+              <div class="stat-label">Livros Disponíveis</div>
+              <div class="stat-value" id="statLivrosDisponiveis">{{ livros_disponiveis or 0 }}</div>
+            </div>
+          </article>
+        </section>
+
+        <!-- Top lists -->
+        <section class="grid-2" aria-label="Listas principais">
+          <article class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Livros mais Emprestados TOP 3</h2>
+              <span class="panel-badge">Geral</span>
+            </header>
+
+            <ol class="top-list">
+              {% for item in top_emprestados %}
+                <li>{{ item.titulo }}</li>
+              {% else %}
+                <li>Nenhum empréstimo registrado.</li>
+              {% endfor %}
+            </ol>
+          </article>
+
+          <article class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Livros mais Comentados TOP 3</h2>
+              <span class="panel-badge">Geral</span>
+            </header>
+
+            <ol class="top-list">
+              {% for item in top_comentados %}
+                <li>{{ item.titulo }}</li>
+              {% else %}
+                <li>Nenhum comentário registrado.</li>
+              {% endfor %}
+            </ol>
+          </article>
+        </section>
+
+        <!-- Status -->
+        <section class="panel status" aria-label="Status do sistema">
+          <header class="panel-head">
+            <h2 class="panel-title">Status do Sistema</h2>
+            <span id="statusGeralBadge" class="panel-badge {{ status_geral_class }}">
+              {{ status_geral_label }}
+            </span>
+          </header>
+
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-ico" aria-hidden="true">🗄️</div>
+              <div class="status-text">
+                <div class="status-name">Banco de Dados</div>
+                <div id="statusBdPill" class="status-pill {{ status_bd.pill_class }}">{{ status_bd.label }}</div>
+                <div id="statusBdDetail" class="status-detail">{{ status_bd.detalhe }}</div>
+              </div>
+            </div>
+
+            <div class="status-item">
+              <div class="status-ico" aria-hidden="true">⚙️</div>
+              <div class="status-text">
+                <div class="status-name">Sistema</div>
+                <div id="statusSistemaPill" class="status-pill {{ status_sistema.pill_class }}">{{ status_sistema.label }}</div>
+                <div id="statusSistemaDetail" class="status-detail">{{ status_sistema.detalhe }}</div>
+              </div>
+            </div>
+
+            <div class="status-item">
+              <div class="status-ico" aria-hidden="true">💬</div>
+              <div class="status-text">
+                <div class="status-name">Fórum</div>
+                <div id="statusForumPill" class="status-pill {{ status_forum.pill_class }}">{{ status_forum.label }}</div>
+                <div id="statusForumDetail" class="status-detail">{{ status_forum.detalhe }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+<!-- Backdrop mobile -->
+<div class="backdrop" id="backdrop" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+<script>
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
+
+  function toggleSidebar(open){
+    document.body.classList.toggle("side-open", !!open);
+    if (backdrop) backdrop.style.display = open ? "block" : "none";
+  }
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth >= 980) {
+      if (backdrop) backdrop.style.display = "none";
+      document.body.classList.remove("side-open");
+    }
+  });
+
+  const painelAtualizarUrl = "{{ url_for('funcionario.painel_atualizar') }}";
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value ?? "—";
+  }
+
+  function updatePanelBadge(el, newClass, text) {
+    if (!el) return;
+
+    el.textContent = text || "—";
+    el.classList.remove("panel-badge--ok", "panel-badge--danger");
+
+    if (newClass) {
+      el.classList.add(newClass);
+    }
+  }
+
+  function updateStatusPill(pillId, detailId, status) {
+    const pill = document.getElementById(pillId);
+    const detail = document.getElementById(detailId);
+
+    if (pill) {
+      pill.textContent = status?.label || "—";
+      pill.classList.remove("is-ok", "is-off");
+
+      if (status?.pill_class) {
+        pill.classList.add(status.pill_class);
+      }
+    }
+
+    if (detail) {
+      detail.textContent = status?.detalhe || "—";
+    }
+  }
+
+  async function atualizarPainel() {
+    try {
+      const response = await fetch(painelAtualizarUrl, {
+        method: "GET",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro HTTP " + response.status);
+      }
+
+      const data = await response.json();
+
+      if (!data || !data.ok) {
+        throw new Error("Resposta inválida.");
+      }
+
+      setText("painelHorario", `${data.data_hoje} • ${data.hora_agora}`);
+
+      setText("statTotalLivros", data.metricas?.total_livros);
+      setText("statUsuariosOnline", data.metricas?.usuarios_online);
+      setText("statReservasAtivas", data.metricas?.reservas_ativas);
+      setText("statLivrosDisponiveis", data.metricas?.livros_disponiveis);
+
+      updatePanelBadge(
+        document.getElementById("statusGeralBadge"),
+        data.status_geral?.class,
+        data.status_geral?.label
+      );
+
+      updateStatusPill("statusBdPill", "statusBdDetail", data.status_bd);
+      updateStatusPill("statusSistemaPill", "statusSistemaDetail", data.status_sistema);
+      updateStatusPill("statusForumPill", "statusForumDetail", data.status_forum);
+
+    } catch (error) {
+      console.error("Erro ao atualizar painel:", error);
+    }
+  }
+
+  atualizarPainel();
+
+  setInterval(() => {
+    if (!document.hidden) {
+      atualizarPainel();
+    }
+  }, 10000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      atualizarPainel();
+    }
+  });
+</script>
+</body>
+</html>

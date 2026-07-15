@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Políticas de Empréstimo • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/politicas_emprestimo.css') }}">
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
+    <div class="side-head">
+      <a class="brand" href="{{ url_for('funcionario.painel') }}">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}"
+        class="brand__logo">
+        <span class="brand__name">LiteraWEB</span>
+      </a>
+
+      <button class="icon-btn side-close" type="button" aria-label="Fechar menu" onclick="toggleSidebar(false)">
+        ✕
+      </button>
+    </div>
+
+    <nav class="side-nav" aria-label="Navegação do funcionário">
+      <a class="side-link {% if request.endpoint == 'funcionario.painel' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.painel') }}">
+        <span class="side-ico" aria-hidden="true">🏠</span>
+        <span>Painel de Controle</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.livros' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.livros') }}">
+        <span class="side-ico" aria-hidden="true">📚</span>
+        <span>Livros</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.reservas' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.reservas') }}">
+        <span class="side-ico" aria-hidden="true">🗓️</span>
+        <span>Reservas</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.usuarios' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.usuarios') }}">
+        <span class="side-ico" aria-hidden="true">👤</span>
+        <span>Usuários</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario_rag.painel_rag' %}is-active{% endif %}"
+           href="{{ url_for('funcionario_rag.painel_rag') }}">
+          <span class="side-ico" aria-hidden="true">🤖</span>
+          <span>Assistente Inteligente</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.politicas_emprestimo' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.politicas_emprestimo') }}">
+        <span class="side-ico" aria-hidden="true">🛡️</span>
+        <span>Políticas do Sistema</span>
+      </a>
+
+      <div class="side-sep"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-avatar" aria-hidden="true"></div>
+        <div class="side-user__meta">
+          <div class="side-user__name">{{ session.get("funcionario_nome", "Funcionário") }}</div>
+          <div class="side-user__role">Acesso interno</div>
+        </div>
+      </div>
+
+      <a class="side-logout" href="{{ url_for('auth.sair') }}">
+        <span aria-hidden="true">↩</span> Sair
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" aria-label="Abrir menu" onclick="toggleSidebar(true)">
+        ☰
+      </button>
+
+      <div class="welcome">
+        <div class="welcome__title">Políticas de Empréstimo</div>
+        <div class="welcome__sub">
+          {{ data_hoje or "—" }} • {{ hora_agora or "—" }}
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <a class="forum-btn" href="{{ url_for('forum.lista_topicos') }}">
+          <span class="forum-btn__ico" aria-hidden="true">💬</span>
+          <span>Ir para o Fórum</span>
+        </a>
+
+        <button class="user-pill" type="button" aria-label="Menu do usuário">
+          <span class="user-pill__avatar" aria-hidden="true"></span>
+          <span class="user-pill__name">{{ session.get("funcionario_nome", "Funcionário") }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="content-inner page-politicas-wrap">
+
+        <!-- Cabeçalho da página -->
+        <section class="page-hero panel">
+          <div class="page-hero__content">
+            <div>
+              <div class="page-hero__eyebrow">Configuração interna</div>
+              <h1 class="page-hero__title">Gerencie as regras de empréstimo do sistema</h1>
+              <p class="page-hero__text">
+                As alterações feitas aqui valem apenas para novas reservas e novos empréstimos.
+                Registros já criados mantêm a política aplicada no momento da criação.
+              </p>
+            </div>
+
+            <div class="page-hero__badge">
+              <span class="panel-badge panel-badge--ok">Política ativa</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <section class="flash-stack" aria-label="Mensagens do sistema">
+              {% for category, message in messages %}
+                <div class="flash flash--{{ category }}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </section>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Resumo da política atual -->
+        <section class="grid-2 grid-2--policy" aria-label="Resumo da política">
+          <article class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Política Atual</h2>
+              <span class="panel-badge panel-badge--ok">Em uso</span>
+            </header>
+
+            <div class="policy-summary">
+              <div class="policy-item">
+                <span class="policy-item__label">Nome</span>
+                <strong class="policy-item__value">{{ politica_atual.nome }}</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Prazo de devolução</span>
+                <strong class="policy-item__value">{{ politica_atual.prazo_devolucao_dias }} dia(s)</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Prazo de retirada</span>
+                <strong class="policy-item__value">{{ politica_atual.prazo_retirada_horas }} hora(s)</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Limite de reservas ativas</span>
+                <strong class="policy-item__value">{{ politica_atual.limite_reservas_ativas }}</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Renovações permitidas</span>
+                <strong class="policy-item__value">{{ politica_atual.max_renovacoes }}</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Prazo por renovação</span>
+                <strong class="policy-item__value">{{ politica_atual.prazo_renovacao_dias }} dia(s)</strong>
+              </div>
+            </div>
+
+            {% if politica_atual.observacao %}
+              <div class="policy-note">
+                <span class="policy-note__title">Observação</span>
+                <p>{{ politica_atual.observacao }}</p>
+              </div>
+            {% endif %}
+          </article>
+
+          <article class="panel">
+            <header class="panel-head">
+              <h2 class="panel-title">Regras de Atraso</h2>
+              <span class="panel-badge">Automação</span>
+            </header>
+
+            <div class="policy-summary">
+              <div class="policy-item">
+                <span class="policy-item__label">Tolerância</span>
+                <strong class="policy-item__value">{{ politica_atual.tolerancia_atraso_dias }} dia(s)</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Tipo de bloqueio</span>
+                <strong class="policy-item__value">{{ politica_atual.tipo_bloqueio_label }}</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Valor aplicado</span>
+                <strong class="policy-item__value">{{ politica_atual.valor_bloqueio_atraso or 0 }}</strong>
+              </div>
+
+              <div class="policy-item">
+                <span class="policy-item__label">Vigente desde</span>
+                <strong class="policy-item__value">
+                  {{ politica_atual.vigente_desde.strftime("%d/%m/%Y %H:%M") if politica_atual.vigente_desde else "—" }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="policy-info-box">
+              <div class="policy-info-box__icon">ℹ️</div>
+              <div>
+                <strong>Importante</strong>
+                <p>
+                  A política nova não recalcula reservas antigas. Cada reserva mantém
+                  seu próprio snapshot de regras para evitar conflito com prazos já definidos.
+                </p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- Formulário -->
+        <section class="panel" aria-label="Cadastrar nova política">
+          <header class="panel-head">
+            <h2 class="panel-title">Cadastrar Nova Política</h2>
+            <span class="panel-badge">Nova versão</span>
+          </header>
+
+          <form method="post"
+                action="{{ url_for('funcionario.politicas_emprestimo_salvar') }}"
+                class="policy-form"
+                id="policyForm">
+
+            <div class="policy-form-grid">
+              <label class="field field--span-2">
+                <span class="field__label">Nome da política</span>
+                <input type="text" name="nome" required placeholder="Ex.: Política 2026 / 2º Semestre">
+              </label>
+
+              <label class="field field--span-2">
+                <span class="field__label">Observação</span>
+                <input type="text" name="observacao" maxlength="255" placeholder="Descreva rapidamente o objetivo desta política">
+              </label>
+
+              <label class="field">
+                <span class="field__label">Prazo de devolução (dias)</span>
+                <input type="number" name="prazo_devolucao_dias" min="1" value="{{ politica_atual.prazo_devolucao_dias }}" required>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Prazo de retirada (horas)</span>
+                <input type="number" name="prazo_retirada_horas" min="1" value="{{ politica_atual.prazo_retirada_horas }}" required>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Limite de reservas ativas</span>
+                <input type="number" name="limite_reservas_ativas" min="1" value="{{ politica_atual.limite_reservas_ativas }}" required>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Máximo de renovações</span>
+                <input type="number" name="max_renovacoes" min="0" value="{{ politica_atual.max_renovacoes }}" required>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Prazo por renovação (dias)</span>
+                <input type="number" name="prazo_renovacao_dias" min="1" value="{{ politica_atual.prazo_renovacao_dias }}" required>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Tolerância de atraso (dias)</span>
+                <input type="number" name="tolerancia_atraso_dias" min="0" value="{{ politica_atual.tolerancia_atraso_dias }}" required>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Tipo de bloqueio por atraso</span>
+                <select name="tipo_bloqueio_atraso" id="tipo_bloqueio_atraso" required>
+                  <option value="1_por_1" {% if politica_atual.tipo_bloqueio_atraso == '1_por_1' %}selected{% endif %}>1 por 1</option>
+                  <option value="fixo" {% if politica_atual.tipo_bloqueio_atraso == 'fixo' %}selected{% endif %}>Fixo</option>
+                  <option value="sem_bloqueio" {% if politica_atual.tipo_bloqueio_atraso == 'sem_bloqueio' %}selected{% endif %}>Sem bloqueio</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Valor do bloqueio</span>
+                <input type="number"
+                       name="valor_bloqueio_atraso"
+                       id="valor_bloqueio_atraso"
+                       min="0"
+                       value="{{ politica_atual.valor_bloqueio_atraso }}"
+                       required>
+              </label>
+            </div>
+
+            <div class="policy-form-actions">
+              <button type="submit" class="btn-primary">
+                Salvar e ativar política
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Histórico -->
+        <section class="panel" aria-label="Histórico de políticas">
+          <header class="panel-head">
+            <h2 class="panel-title">Histórico de Políticas</h2>
+            <span class="panel-badge">Auditoria</span>
+          </header>
+
+          <div class="table-wrap">
+            <table class="policy-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Devolução</th>
+                  <th>Retirada</th>
+                  <th>Limite</th>
+                  <th>Renovações</th>
+                  <th>Atraso</th>
+                  <th>Status</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in historico %}
+                  <tr>
+                    <td>
+                      <div class="table-main">{{ p.nome }}</div>
+                      <div class="table-sub">
+                        {{ p.vigente_desde.strftime("%d/%m/%Y %H:%M") if p.vigente_desde else "—" }}
+                      </div>
+                    </td>
+                    <td>{{ p.prazo_devolucao_dias }} dia(s)</td>
+                    <td>{{ p.prazo_retirada_horas }}h</td>
+                    <td>{{ p.limite_reservas_ativas }}</td>
+                    <td>{{ p.max_renovacoes }}x / {{ p.prazo_renovacao_dias }} dia(s)</td>
+                    <td>{{ p.tipo_bloqueio_label }}</td>
+                    <td>
+                      {% if p.ativa %}
+                        <span class="table-pill table-pill--ok">ATIVA</span>
+                      {% else %}
+                        <span class="table-pill table-pill--muted">INATIVA</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if not p.ativa %}
+                        <form method="post" action="{{ url_for('funcionario.politicas_emprestimo_ativar', politica_id=p.id) }}">
+                          <button type="submit" class="btn-table-action">
+                            Ativar
+                          </button>
+                        </form>
+                      {% else %}
+                        <span class="table-dash">—</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="8" class="table-empty">Nenhuma política cadastrada até o momento.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Backdrop mobile -->
+  <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const backdrop = document.getElementById("backdrop");
+
+    function toggleSidebar(open){
+      document.body.classList.toggle("side-open", !!open);
+      if (backdrop) backdrop.style.display = open ? "block" : "none";
+    }
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 980) {
+        if (backdrop) backdrop.style.display = "none";
+        document.body.classList.remove("side-open");
+      }
+    });
+
+    const tipoBloqueio = document.getElementById("tipo_bloqueio_atraso");
+    const valorBloqueio = document.getElementById("valor_bloqueio_atraso");
+
+    function syncBloqueioField() {
+      if (!tipoBloqueio || !valorBloqueio) return;
+
+      const semBloqueio = tipoBloqueio.value === "sem_bloqueio";
+      valorBloqueio.readOnly = semBloqueio;
+      valorBloqueio.classList.toggle("is-readonly", semBloqueio);
+
+      if (semBloqueio) {
+        valorBloqueio.value = 0;
+      } else if (parseInt(valorBloqueio.value || "0", 10) < 1) {
+        valorBloqueio.value = 1;
+      }
+    }
+
+    if (tipoBloqueio && valorBloqueio) {
+      tipoBloqueio.addEventListener("change", syncBloqueioField);
+      syncBloqueioField();
+    }
+  </script>
+</body>
+</html>

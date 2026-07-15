@@ -1,0 +1,58 @@
+# Credenciais
+.env
+.env.*
+!.env.example
+
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs e temporários
+*.log
+*.tmp
+*.temp
+*.bak
+logs/
+
+# Bancos locais
+*.db
+*.sqlite
+*.sqlite3
+
+# Fotos enviadas por usuários
+app/static/uploads/perfis/*
+!app/static/uploads/perfis/.gitkeep
+
+# Modelos e arquivos pesados de IA
+models/
+modelos/
+checkpoints/
+*.safetensors
+*.gguf
+*.pt
+*.pth
+
+# Cache de IA
+.cache/
+huggingface/
+.vllm/
+
+# Índices gerados
+*.faiss
+*.index
+vector_store/

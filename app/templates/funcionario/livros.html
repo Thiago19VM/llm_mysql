@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerenciamento de Livros • LiteraWEB</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/painel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/livros.css') }}">
+    {% include "_partials/alerts.html" %}
+</head>
+
+<body class="page-livros">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Menu lateral">
+    <div class="side-head">
+      <a class="brand" href="{{ url_for('funcionario.painel') }}">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}"
+        class="brand__logo">
+        <span class="brand__name">LiteraWEB</span>
+      </a>
+
+      <button class="icon-btn side-close" type="button" aria-label="Fechar menu" onclick="toggleSidebar(false)">
+        ✕
+      </button>
+    </div>
+
+    <nav class="side-nav" aria-label="Navegação do funcionário">
+      <a class="side-link {% if request.endpoint == 'funcionario.painel' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.painel') }}">
+        <span class="side-ico" aria-hidden="true">🏠</span>
+        <span>Painel de Controle</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.livros' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.livros') }}">
+        <span class="side-ico" aria-hidden="true">📚</span>
+        <span>Livros</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.reservas' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.reservas') }}">
+        <span class="side-ico" aria-hidden="true">🗓️</span>
+        <span>Reservas</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.usuarios' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.usuarios') }}">
+        <span class="side-ico" aria-hidden="true">👤</span>
+        <span>Usuários</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario_rag.painel_rag' %}is-active{% endif %}"
+           href="{{ url_for('funcionario_rag.painel_rag') }}">
+          <span class="side-ico" aria-hidden="true">🤖</span>
+          <span>Assistente Inteligente</span>
+      </a>
+
+      <a class="side-link {% if request.endpoint == 'funcionario.politicas_emprestimo' %}is-active{% endif %}"
+         href="{{ url_for('funcionario.politicas_emprestimo') }}">
+        <span class="side-ico" aria-hidden="true">🛡️</span>
+        <span>Políticas do Sistema</span>
+      </a>
+
+      <div class="side-sep"></div>
+    </nav>
+
+    <div class="side-foot">
+      <div class="side-user">
+        <div class="side-avatar" aria-hidden="true"></div>
+        <div class="side-user__meta">
+          <div class="side-user__name">{{ session.get("funcionario_nome", "Funcionário") }}</div>
+          <div class="side-user__role">Acesso interno</div>
+        </div>
+      </div>
+
+      <a class="side-logout" href="{{ url_for('auth.sair') }}">
+        <span aria-hidden="true">↩</span> Sair
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn burger" type="button" aria-label="Abrir menu" onclick="toggleSidebar(true)">
+        ☰
+      </button>
+
+      <div class="welcome">
+        <div class="welcome__title">Gerenciamento de Livros</div>
+        <div class="welcome__sub" id="pageClock">
+          {{ data_hoje }} • {{ hora_agora }}
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <a class="forum-btn" href="{{ url_for('forum.lista_topicos') }}">
+          <span class="forum-btn__ico" aria-hidden="true">💬</span>
+          <span>Ir para o Fórum</span>
+        </a>
+
+        <button class="user-pill" type="button" aria-label="Usuário logado">
+          <span class="user-pill__avatar" aria-hidden="true"></span>
+          <span class="user-pill__name">{{ session.get("funcionario_nome", "Funcionário") }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="content-inner">
+
+        <div class="page-head">
+          <a class="btn-add" href="{{ url_for('funcionario.adicionar_livro') }}">Adicionar Livro</a>
+        </div>
+
+        <!-- Filtros -->
+        <section class="panel filters" aria-label="Filtros de livros">
+          <form class="filters-grid" method="get" action="{{ url_for('funcionario.livros') }}">
+            <input type="hidden" name="page" value="1">
+            <input type="hidden" name="aba" id="currentTabInput" value="{{ request.args.get('aba', 'cadastrados') }}">
+
+            <div class="f-group">
+              <label class="f-label" for="q">Título</label>
+              <div class="f-input">
+                <span class="f-ico" aria-hidden="true">🔎</span>
+                <input id="q" name="q" type="text" placeholder="Procurar" value="{{ request.args.get('q','') }}">
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="genero">Gênero</label>
+              <select id="genero" name="genero" class="f-select">
+                <option value="" {% if request.args.get('genero','') == '' %}selected{% endif %}>Todos os gêneros</option>
+                <option value="acao" {% if request.args.get('genero') == 'acao' %}selected{% endif %}>Ação</option>
+                <option value="aventura" {% if request.args.get('genero') == 'aventura' %}selected{% endif %}>Aventura</option>
+                <option value="autoajuda" {% if request.args.get('genero') == 'autoajuda' %}selected{% endif %}>Autoajuda / Desenvolvimento pessoal</option>
+                <option value="biografia" {% if request.args.get('genero') == 'biografia' %}selected{% endif %}>Biografia / Autobiografia</option>
+                <option value="ciencia" {% if request.args.get('genero') == 'ciencia' %}selected{% endif %}>Ciência / Divulgação científica</option>
+                <option value="classicos" {% if request.args.get('genero') == 'classicos' %}selected{% endif %}>Clássicos</option>
+                <option value="conto" {% if request.args.get('genero') == 'conto' %}selected{% endif %}>Contos</option>
+                <option value="culinaria" {% if request.args.get('genero') == 'culinaria' %}selected{% endif %}>Culinária</option>
+                <option value="direito" {% if request.args.get('genero') == 'direito' %}selected{% endif %}>Direito</option>
+                <option value="drama" {% if request.args.get('genero') == 'drama' %}selected{% endif %}>Drama</option>
+                <option value="educacao" {% if request.args.get('genero') == 'educacao' %}selected{% endif %}>Educação</option>
+                <option value="fantasia" {% if request.args.get('genero') == 'fantasia' %}selected{% endif %}>Fantasia</option>
+                <option value="ficcao" {% if request.args.get('genero') == 'ficcao' %}selected{% endif %}>Ficção</option>
+                <option value="ficcao_cientifica" {% if request.args.get('genero') == 'ficcao_cientifica' %}selected{% endif %}>Ficção Científica</option>
+                <option value="filosofia" {% if request.args.get('genero') == 'filosofia' %}selected{% endif %}>Filosofia</option>
+                <option value="historia" {% if request.args.get('genero') == 'historia' %}selected{% endif %}>História</option>
+                <option value="hq" {% if request.args.get('genero') == 'hq' %}selected{% endif %}>HQ</option>
+                <option value="infantil" {% if request.args.get('genero') == 'infantil' %}selected{% endif %}>Infantil</option>
+                <option value="juvenil" {% if request.args.get('genero') == 'juvenil' %}selected{% endif %}>Juvenil (YA)</option>
+                <option value="manga" {% if request.args.get('genero') == 'manga' %}selected{% endif %}>Mangá</option>
+                <option value="misterio" {% if request.args.get('genero') == 'misterio' %}selected{% endif %}>Mistério</option>
+                <option value="negocios" {% if request.args.get('genero') == 'negocios' %}selected{% endif %}>Negócios / Administração</option>
+                <option value="nao_ficcao" {% if request.args.get('genero') == 'nao_ficcao' %}selected{% endif %}>Não ficção</option>
+                <option value="poesia" {% if request.args.get('genero') == 'poesia' %}selected{% endif %}>Poesia</option>
+                <option value="psicologia" {% if request.args.get('genero') == 'psicologia' %}selected{% endif %}>Psicologia</option>
+                <option value="religiao" {% if request.args.get('genero') == 'religiao' %}selected{% endif %}>Religião / Espiritualidade</option>
+                <option value="romance" {% if request.args.get('genero') == 'romance' %}selected{% endif %}>Romance</option>
+                <option value="suspense" {% if request.args.get('genero') == 'suspense' %}selected{% endif %}>Suspense</option>
+                <option value="tecnologia" {% if request.args.get('genero') == 'tecnologia' %}selected{% endif %}>Tecnologia / Computação</option>
+                <option value="terror" {% if request.args.get('genero') == 'terror' %}selected{% endif %}>Terror</option>
+                <option value="thriller" {% if request.args.get('genero') == 'thriller' %}selected{% endif %}>Thriller</option>
+              </select>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="ano">Ano</label>
+              <div class="f-input no-ico">
+                <input id="ano" name="ano" type="text" inputmode="numeric" pattern="[0-9]*"
+                       placeholder="Ex: 2015" value="{{ request.args.get('ano','') }}">
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="edicao">Edição</label>
+              <div class="f-input no-ico">
+                <input id="edicao" name="edicao" type="text"
+                       placeholder="Ex: 2, 3, revisada..." value="{{ request.args.get('edicao','') }}">
+              </div>
+            </div>
+
+            <div class="f-group">
+              <label class="f-label" for="disp">Disponibilidade</label>
+              <select id="disp" name="disp" class="f-select">
+                <option value="" {% if request.args.get('disp','') == '' %}selected{% endif %}>Todos os livros</option>
+                <option value="disponivel" {% if request.args.get('disp') == 'disponivel' %}selected{% endif %}>Disponíveis</option>
+                <option value="indisponivel" {% if request.args.get('disp') == 'indisponivel' %}selected{% endif %}>Indisponíveis</option>
+              </select>
+            </div>
+
+            <div class="f-actions">
+              <button class="btn-secondary" type="submit">Aplicar</button>
+              <a class="btn-ghost" href="{{ url_for('funcionario.livros') }}">Limpar</a>
+            </div>
+          </form>
+        </section>
+
+        <!-- Tabela com guias -->
+        <section class="panel table-wrap" aria-label="Tabelas de livros">
+          {% set total = pag.total %}
+          {% set start = (pag.page - 1) * pag.per_page + 1 if total > 0 else 0 %}
+          {% set end = (pag.page - 1) * pag.per_page + (livros|length) if total > 0 else 0 %}
+
+          {% set livros_exc = livros_excluidos if livros_excluidos is defined else [] %}
+          {% set total_exc = pag_excluidos.total if pag_excluidos is defined else (livros_exc|length) %}
+          {% set start_exc = ((pag_excluidos.page - 1) * pag_excluidos.per_page + 1) if pag_excluidos is defined and total_exc > 0 else (1 if total_exc > 0 else 0) %}
+          {% set end_exc = ((pag_excluidos.page - 1) * pag_excluidos.per_page + (livros_exc|length)) if pag_excluidos is defined and total_exc > 0 else (livros_exc|length if total_exc > 0 else 0) %}
+          {% set pages_exc = pages_excluidos if pages_excluidos is defined else [] %}
+
+          <div class="table-head table-head--tabs">
+            <div class="table-tabs" role="tablist" aria-label="Guias da listagem de livros">
+              <button
+                type="button"
+                class="table-tab is-active"
+                id="tab-cadastrados"
+                data-tab-target="cadastrados"
+                role="tab"
+                aria-selected="true"
+                aria-controls="panel-cadastrados"
+              >
+                Livros cadastrados
+              </button>
+
+              <button
+                type="button"
+                class="table-tab"
+                id="tab-excluidos"
+                data-tab-target="excluidos"
+                role="tab"
+                aria-selected="false"
+                aria-controls="panel-excluidos"
+              >
+                Livros excluídos
+              </button>
+            </div>
+
+            <div class="table-meta" id="tableMetaCadastrados">
+              Mostrando <strong>{{ start }}</strong>–<strong>{{ end }}</strong> de <strong>{{ total }}</strong> livros
+            </div>
+
+            <div class="table-meta" id="tableMetaExcluidos" hidden>
+              Mostrando <strong>{{ start_exc }}</strong>–<strong>{{ end_exc }}</strong> de <strong>{{ total_exc }}</strong> livros
+            </div>
+          </div>
+
+          <!-- Painel: cadastrados -->
+          <div
+            class="table-tab-panel is-active"
+            id="panel-cadastrados"
+            data-tab-panel="cadastrados"
+            role="tabpanel"
+            aria-labelledby="tab-cadastrados"
+          >
+            <div class="table-scroll" role="region" aria-label="Tabela de livros cadastrados (rolável)">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Título</th>
+                    <th style="width: 150px;">Edição</th>
+                    <th style="width: 110px;">Ano</th>
+                    <th style="width: 220px;">Autor</th>
+                    <th style="width: 170px;">Gênero</th>
+                    <th style="width: 140px;">Status</th>
+                    <th class="th-actions" style="width: 160px;">Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {% if livros and livros|length > 0 %}
+                    {% for livro in livros %}
+                      {% set total_ex = (livro.stats_total if livro.stats_total is defined else ((livro.exemplares|length) if livro.exemplares else 0)) %}
+                      {% set disp_ex = (livro.stats_disponivel if livro.stats_disponivel is defined else ((livro.exemplares|selectattr('status','equalto','disponivel')|list|length) if livro.exemplares else 0)) %}
+                      {% set res_ex  = (livro.stats_reservado if livro.stats_reservado is defined else ((livro.exemplares|selectattr('status','equalto','reservado')|list|length) if livro.exemplares else 0)) %}
+                      {% set emp_ex  = (livro.stats_emprestado if livro.stats_emprestado is defined else ((livro.exemplares|selectattr('status','equalto','emprestado')|list|length) if livro.exemplares else 0)) %}
+
+                      {% set status_label = "Disponível" if disp_ex|int > 0 else "Indisponível" %}
+                      {% set status_class = "ok" if disp_ex|int > 0 else "warn" %}
+
+                      <tr>
+                        <td>#{{ livro.id }}</td>
+                        <td class="td-title">{{ livro.titulo }}</td>
+                        <td>{{ livro.edicao or "-" }}</td>
+                        <td>{{ livro.ano or "-" }}</td>
+                        <td>{{ livro.autor }}</td>
+                        <td>{{ livro.genero_label or "—" }}</td>
+                        <td><span class="badge {{ status_class }}">{{ status_label }}</span></td>
+
+                        <td class="td-actions">
+                          <button
+                            type="button"
+                            class="action-btn action-btn--edit btn-edit"
+                            data-action="{{ url_for('funcionario.editar_livro', livro_id=livro.id) }}"
+                            data-id="{{ livro.id }}"
+                            data-titulo="{{ livro.titulo|e }}"
+                            data-autor="{{ livro.autor|e }}"
+                            data-genero="{{ (livro.genero or '')|e }}"
+                            data-editora="{{ (livro.editora or '')|e }}"
+                            data-ano="{{ (livro.ano or '') }}"
+                            data-isbn="{{ (livro.isbn or '')|e }}"
+                            data-edicao="{{ (livro.edicao or '')|e }}"
+                            data-tipo_capa="{{ (livro.tipo_capa or '')|e }}"
+                            data-sinopse="{{ (livro.sinopse or '')|e }}"
+                            data-capa="{{ (livro.capa_arquivo or '')|e }}"
+                            data-total_exemplares="{{ total_ex }}"
+                            data-disponiveis="{{ disp_ex }}"
+                            data-reservados="{{ res_ex }}"
+                            data-emprestados="{{ emp_ex }}"
+                            data-localizacao="{% if livro.localizacao_padrao is defined %}{{ (livro.localizacao_padrao or '')|e }}{% else %}{{ (livro.exemplares[0].localizacao if livro.exemplares and livro.exemplares|length>0 else '')|e }}{% endif %}"
+                          >
+                            Editar
+                          </button>
+
+                          <form method="post"
+                                action="{{ url_for('funcionario.excluir_livro', livro_id=livro.id) }}"
+                                class="js-confirm-form"
+                                data-confirm-title="Excluir livro?"
+                                data-confirm-text="Todos os exemplares sairão de circulação, mas o histórico será mantido."
+                                data-confirm-icon="warning"
+                                data-confirm-button="Sim, excluir"
+                                data-cancel-button="Cancelar">
+                            {% if csrf_token is defined %}
+                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {% endif %}
+
+                            <button type="submit" class="action-btn action-btn--danger">
+                              Excluir
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr class="empty-row">
+                      <td colspan="8">
+                        <div class="empty">
+                          <div class="empty-ico" aria-hidden="true">📚</div>
+                          <div class="empty-title">Nenhum livro cadastrado ainda</div>
+                          <div class="empty-sub">
+                            Quando você inserir livros no banco, eles vão aparecer aqui automaticamente.
+                          </div>
+                          <a class="btn-primary" href="{{ url_for('funcionario.adicionar_livro') }}">
+                            Adicionar primeiro livro
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Paginação cadastrados -->
+            <div class="pager">
+              <div class="pager-left">
+                Mostrando {{ start }}–{{ end }} de {{ total }} livros
+              </div>
+
+              <div class="pager-right" aria-label="Paginação">
+                {% if pag.has_prev %}
+                  <a class="pg-btn" href="{{ url_for('funcionario.livros', page=pag.prev_num, **args_no_page) }}">←</a>
+                {% else %}
+                  <button class="pg-btn" type="button" disabled>←</button>
+                {% endif %}
+
+                {% if pages and pages[0] > 1 %}
+                  <a class="pg-num" href="{{ url_for('funcionario.livros', page=1, **args_no_page) }}">1</a>
+                  {% if pages[0] > 2 %}<span class="pg-ellipsis">…</span>{% endif %}
+                {% endif %}
+
+                {% for p in pages %}
+                  {% if p == pag.page %}
+                    <button class="pg-num is-active" type="button">{{ p }}</button>
+                  {% else %}
+                    <a class="pg-num" href="{{ url_for('funcionario.livros', page=p, **args_no_page) }}">{{ p }}</a>
+                  {% endif %}
+                {% endfor %}
+
+                {% if pages and pages[-1] < pag.pages %}
+                  {% if pages[-1] < pag.pages - 1 %}<span class="pg-ellipsis">…</span>{% endif %}
+                  <a class="pg-num" href="{{ url_for('funcionario.livros', page=pag.pages, **args_no_page) }}">{{ pag.pages }}</a>
+                {% endif %}
+
+                {% if pag.has_next %}
+                  <a class="pg-btn" href="{{ url_for('funcionario.livros', page=pag.next_num, **args_no_page) }}">→</a>
+                {% else %}
+                  <button class="pg-btn" type="button" disabled>→</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Painel: excluídos -->
+          <div
+            class="table-tab-panel"
+            id="panel-excluidos"
+            data-tab-panel="excluidos"
+            role="tabpanel"
+            aria-labelledby="tab-excluidos"
+            hidden
+          >
+            <div class="table-scroll" role="region" aria-label="Tabela de livros excluídos (rolável)">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Título</th>
+                    <th style="width: 150px;">Edição</th>
+                    <th style="width: 110px;">Ano</th>
+                    <th style="width: 220px;">Autor</th>
+                    <th style="width: 170px;">Gênero</th>
+                    <th style="width: 140px;">Status</th>
+                    <th class="th-actions" style="width: 160px;">Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {% if livros_exc and livros_exc|length > 0 %}
+                    {% for livro in livros_exc %}
+                      <tr>
+                        <td>#{{ livro.id }}</td>
+                        <td class="td-title">{{ livro.titulo }}</td>
+                        <td>{{ livro.edicao or "-" }}</td>
+                        <td>{{ livro.ano or "-" }}</td>
+                        <td>{{ livro.autor }}</td>
+                        <td>{{ livro.genero_label or "—" }}</td>
+                        <td><span class="badge warn">Excluído</span></td>
+                        <td class="td-actions">
+                          <div class="td-actions-wrap">
+                            <form method="post"
+                                  action="{{ url_for('funcionario.restaurar_livro', livro_id=livro.id) }}"
+                                  class="js-confirm-form"
+                                  data-confirm-title="Restaurar livro?"
+                                  data-confirm-text="O livro voltará para a lista de cadastrados."
+                                  data-confirm-icon="question"
+                                  data-confirm-button="Sim, restaurar"
+                                  data-cancel-button="Cancelar">
+                              {% if csrf_token is defined %}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                              {% endif %}
+
+                              <button type="submit" class="action-btn action-btn--restore">
+                                Restaurar
+                              </button>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr class="empty-row">
+                      <td colspan="8">
+                        <div class="empty">
+                          <div class="empty-ico" aria-hidden="true">🗃️</div>
+                          <div class="empty-title">Nenhum livro excluído encontrado</div>
+                          <div class="empty-sub">
+                            Os livros removidos do sistema aparecerão aqui para consulta de histórico.
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+
+            {% if pag_excluidos is defined %}
+              <div class="pager">
+                <div class="pager-left">
+                  Mostrando {{ start_exc }}–{{ end_exc }} de {{ total_exc }} livros
+                </div>
+
+                <div class="pager-right" aria-label="Paginação de livros excluídos">
+                  {% if pag_excluidos.has_prev %}
+                    <a class="pg-btn" href="{{ url_for('funcionario.livros', page_excluidos=pag_excluidos.prev_num, **args_no_page) }}">←</a>
+                  {% else %}
+                    <button class="pg-btn" type="button" disabled>←</button>
+                  {% endif %}
+
+                  {% if pages_exc and pages_exc[0] > 1 %}
+                    <a class="pg-num" href="{{ url_for('funcionario.livros', page_excluidos=1, **args_no_page) }}">1</a>
+                    {% if pages_exc[0] > 2 %}<span class="pg-ellipsis">…</span>{% endif %}
+                  {% endif %}
+
+                  {% for p in pages_exc %}
+                    {% if p == pag_excluidos.page %}
+                      <button class="pg-num is-active" type="button">{{ p }}</button>
+                    {% else %}
+                      <a class="pg-num" href="{{ url_for('funcionario.livros', page_excluidos=p, **args_no_page) }}">{{ p }}</a>
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if pages_exc and pages_exc[-1] < pag_excluidos.pages %}
+                    {% if pages_exc[-1] < pag_excluidos.pages - 1 %}<span class="pg-ellipsis">…</span>{% endif %}
+                    <a class="pg-num" href="{{ url_for('funcionario.livros', page_excluidos=pag_excluidos.pages, **args_no_page) }}">{{ pag_excluidos.pages }}</a>
+                  {% endif %}
+
+                  {% if pag_excluidos.has_next %}
+                    <a class="pg-btn" href="{{ url_for('funcionario.livros', page_excluidos=pag_excluidos.next_num, **args_no_page) }}">→</a>
+                  {% else %}
+                    <button class="pg-btn" type="button" disabled>→</button>
+                  {% endif %}
+                </div>
+              </div>
+            {% else %}
+              <div class="pager">
+                <div class="pager-left">
+                  Mostrando {{ start_exc }}–{{ end_exc }} de {{ total_exc }} livros
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL / SUBMENU (EDITAR LIVRO) -->
+  <div class="modal-backdrop" id="editBackdrop" aria-hidden="true"></div>
+
+  <section class="modal" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editTitle" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 class="modal-title" id="editTitle">Editar livro</h2>
+        <button class="icon-btn" type="button" aria-label="Fechar" id="btnCloseModal">✕</button>
+      </div>
+
+      <form method="post" action="#" enctype="multipart/form-data" class="modal-form" id="editForm">
+        <input type="hidden" name="livro_id" id="edit_id" value="">
+        <input type="hidden" name="capa_atual" id="edit_capa_atual" value="">
+
+        <div class="modal-body">
+          <!-- Capa -->
+          <aside class="cover-box" aria-label="Capa do livro">
+            <div class="cover-title">Prévia da capa</div>
+
+            <div class="cover-preview">
+              <div class="cover-placeholder" id="coverPlaceholder">Sem capa cadastrada</div>
+              <img id="coverImg" alt="Capa do livro">
+            </div>
+
+            <div class="cover-actions">
+              <div class="field">
+                <label for="edit_capa">Trocar capa</label>
+                <input id="edit_capa" name="capa" type="file" accept="image/*">
+                <small class="help">PNG, JPG ou WEBP (opcional)</small>
+              </div>
+            </div>
+
+            <div class="cover-stats" aria-label="Status dos exemplares">
+              <div class="cover-stats__title">Status dos exemplares</div>
+
+              <div class="cover-stats__grid">
+                <div class="cover-stat">
+                  <div class="cover-stat__label">Disponíveis</div>
+                  <div class="cover-stat__value" id="stat_disponiveis">0</div>
+                </div>
+
+                <div class="cover-stat">
+                  <div class="cover-stat__label">Reservados</div>
+                  <div class="cover-stat__value" id="stat_reservados">0</div>
+                </div>
+
+                <div class="cover-stat">
+                  <div class="cover-stat__label">Emprestados</div>
+                  <div class="cover-stat__value" id="stat_emprestados">0</div>
+                </div>
+
+                <div class="cover-stat">
+                  <div class="cover-stat__label">Total de cópias</div>
+                  <div class="cover-stat__value" id="stat_total">0</div>
+                </div>
+              </div>
+
+              <small class="help">Esses números são calculados pelos exemplares vinculados ao livro.</small>
+            </div>
+          </aside>
+
+          <!-- Formulário -->
+          <div>
+            <div class="modal-grid">
+              <div class="field">
+                <label for="edit_titulo">Título</label>
+                <input id="edit_titulo" name="titulo" type="text" required>
+              </div>
+
+              <div class="field">
+                <label for="edit_autor">Autor</label>
+                <input id="edit_autor" name="autor" type="text" required>
+              </div>
+
+              <div class="field">
+                <label for="edit_genero">Gênero</label>
+                <select id="edit_genero" name="genero">
+                  <option value="">Selecione</option>
+                  <option value="acao">Ação</option>
+                  <option value="aventura">Aventura</option>
+                  <option value="autoajuda">Autoajuda / Desenvolvimento pessoal</option>
+                  <option value="biografia">Biografia / Autobiografia</option>
+                  <option value="ciencia">Ciência / Divulgação científica</option>
+                  <option value="classicos">Clássicos</option>
+                  <option value="conto">Contos</option>
+                  <option value="culinaria">Culinária</option>
+                  <option value="direito">Direito</option>
+                  <option value="drama">Drama</option>
+                  <option value="educacao">Educação</option>
+                  <option value="fantasia">Fantasia</option>
+                  <option value="ficcao">Ficção</option>
+                  <option value="ficcao_cientifica">Ficção Científica</option>
+                  <option value="filosofia">Filosofia</option>
+                  <option value="historia">História</option>
+                  <option value="hq">HQ</option>
+                  <option value="infantil">Infantil</option>
+                  <option value="juvenil">Juvenil (YA)</option>
+                  <option value="manga">Mangá</option>
+                  <option value="misterio">Mistério</option>
+                  <option value="negocios">Negócios / Administração</option>
+                  <option value="nao_ficcao">Não ficção</option>
+                  <option value="poesia">Poesia</option>
+                  <option value="psicologia">Psicologia</option>
+                  <option value="religiao">Religião / Espiritualidade</option>
+                  <option value="romance">Romance</option>
+                  <option value="suspense">Suspense</option>
+                  <option value="tecnologia">Tecnologia / Computação</option>
+                  <option value="terror">Terror</option>
+                  <option value="thriller">Thriller</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="edit_editora">Editora</label>
+                <input id="edit_editora" name="editora" type="text">
+              </div>
+
+              <div class="field">
+                <label for="edit_ano">Ano</label>
+                <input id="edit_ano" name="ano" type="number" min="1000" max="2100">
+              </div>
+
+              <div class="field">
+                <label for="edit_isbn">ISBN</label>
+                <input id="edit_isbn" name="isbn" type="text">
+              </div>
+
+              <div class="field">
+                <label for="edit_tipo_capa">Formato</label>
+                <select id="edit_tipo_capa" name="tipo_capa">
+                  <option value="">Selecione</option>
+                  <option value="Capa Comum">Capa Comum</option>
+                  <option value="Livro de Bolso">Livro de Bolso</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="edit_edicao">Edição</label>
+                <input id="edit_edicao" name="edicao" type="text" placeholder="Ex: 2, 3, 2 revisada">
+              </div>
+
+              <div class="field field-sinopse">
+                <label for="edit_sinopse">Sinopse</label>
+                <textarea id="edit_sinopse" name="sinopse" placeholder="Escreva..."></textarea>
+              </div>
+            </div>
+
+            <div class="extras">
+              <div class="extras-title">Exemplares</div>
+
+              <div class="extras-grid">
+                <div class="field">
+                  <label for="edit_localizacao">Localização (padrão)</label>
+                  <input id="edit_localizacao" name="localizacao" type="text" placeholder="Ex: Prateleira A">
+                </div>
+
+                <label class="chk" for="edit_aplicar_todos">
+                  <input id="edit_aplicar_todos" name="aplicar_todos_exemplares" type="checkbox" value="1">
+                  Aplicar localização a todos os exemplares
+                </label>
+              </div>
+
+              <small class="help">
+                A localização é armazenada nos exemplares. Você pode aplicar uma localização padrão para todos.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" type="button" id="btnCancelModal">Cancelar</button>
+          <button class="btn-primary" type="submit">Salvar alterações</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Backdrop mobile (sidebar) -->
+  <div class="backdrop" id="backdrop" onclick="toggleSidebar(false)" aria-hidden="true"></div>
+
+  <script>
+    // ===== Sidebar =====
+    const backdrop = document.getElementById("backdrop");
+
+    function toggleSidebar(open){
+      document.body.classList.toggle("side-open", !!open);
+      if (backdrop) backdrop.style.display = open ? "block" : "none";
+    }
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 980) {
+        if (backdrop) backdrop.style.display = "none";
+        document.body.classList.remove("side-open");
+      }
+    });
+
+    // ===== Relógio da topbar =====
+    function atualizarRelogioTopbar() {
+      const el = document.getElementById("pageClock");
+      if (!el) return;
+
+      const agora = new Date();
+
+      const data = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(agora);
+
+      const hora = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(agora);
+
+      el.textContent = `${data} • ${hora}`;
+    }
+
+    atualizarRelogioTopbar();
+
+    setInterval(() => {
+      atualizarRelogioTopbar();
+    }, 10000);
+
+    // ===== Guias da tabela =====
+    const TAB_STORAGE_KEY = "literaweb_livros_active_tab";
+    const currentTabInput = document.getElementById("currentTabInput");
+    const tableTabs = document.querySelectorAll("[data-tab-target]");
+    const tablePanels = document.querySelectorAll("[data-tab-panel]");
+    const tableMetaCadastrados = document.getElementById("tableMetaCadastrados");
+    const tableMetaExcluidos = document.getElementById("tableMetaExcluidos");
+
+    function activateTableTab(tabName) {
+      const normalized = tabName === "excluidos" ? "excluidos" : "cadastrados";
+
+      tableTabs.forEach((tab) => {
+        const isActive = tab.dataset.tabTarget === normalized;
+        tab.classList.toggle("is-active", isActive);
+        tab.setAttribute("aria-selected", isActive ? "true" : "false");
+        tab.tabIndex = isActive ? 0 : -1;
+      });
+
+      tablePanels.forEach((panel) => {
+        const isActive = panel.dataset.tabPanel === normalized;
+        panel.classList.toggle("is-active", isActive);
+        panel.hidden = !isActive;
+      });
+
+      if (tableMetaCadastrados && tableMetaExcluidos) {
+        const isExcluidos = normalized === "excluidos";
+        tableMetaCadastrados.hidden = isExcluidos;
+        tableMetaExcluidos.hidden = !isExcluidos;
+      }
+
+      if (currentTabInput) {
+        currentTabInput.value = normalized;
+      }
+
+      try {
+        sessionStorage.setItem(TAB_STORAGE_KEY, normalized);
+      } catch (e) {}
+    }
+
+    tableTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        activateTableTab(tab.dataset.tabTarget);
+      });
+    });
+
+    const tabFromQuery = (currentTabInput?.value || "").trim();
+    let initialTab = "cadastrados";
+
+    try {
+      initialTab = sessionStorage.getItem(TAB_STORAGE_KEY) || tabFromQuery || "cadastrados";
+    } catch (e) {
+      initialTab = tabFromQuery || "cadastrados";
+    }
+
+    activateTableTab(initialTab);
+
+    // ===== Modal Editar =====
+    const editModal = document.getElementById("editModal");
+    const editBackdrop = document.getElementById("editBackdrop");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+    const btnCancelModal = document.getElementById("btnCancelModal");
+    const editForm = document.getElementById("editForm");
+
+    const coverImg = document.getElementById("coverImg");
+    const coverPlaceholder = document.getElementById("coverPlaceholder");
+    const fileInput = document.getElementById("edit_capa");
+    const chkAplicarTodos = document.getElementById("edit_aplicar_todos");
+
+    function openEditModal(){
+      editModal.classList.add("is-open");
+      editBackdrop.classList.add("is-open");
+      editModal.setAttribute("aria-hidden", "false");
+      editBackdrop.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+    }
+
+    function closeEditModal(){
+      editModal.classList.remove("is-open");
+      editBackdrop.classList.remove("is-open");
+      editModal.setAttribute("aria-hidden", "true");
+      editBackdrop.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("modal-open");
+      if (fileInput) fileInput.value = "";
+    }
+
+    function setVal(id, v){
+      const el = document.getElementById(id);
+      if(el) el.value = (v ?? "");
+    }
+
+    function setCoverPreview(capaPath){
+      const base = "{{ url_for('static', filename='') }}";
+      if(capaPath && capaPath.trim() !== ""){
+        coverImg.src = base + capaPath;
+        coverImg.style.display = "block";
+        coverPlaceholder.style.display = "none";
+      }else{
+        coverImg.removeAttribute("src");
+        coverImg.style.display = "none";
+        coverPlaceholder.style.display = "block";
+      }
+    }
+
+    document.querySelectorAll(".btn-edit").forEach(btn => {
+      btn.addEventListener("click", () => {
+        setVal("edit_id", btn.dataset.id);
+        setVal("edit_titulo", btn.dataset.titulo);
+        setVal("edit_autor", btn.dataset.autor);
+        setVal("edit_genero", btn.dataset.genero);
+        setVal("edit_editora", btn.dataset.editora);
+        setVal("edit_ano", btn.dataset.ano);
+        setVal("edit_isbn", btn.dataset.isbn);
+        setVal("edit_edicao", btn.dataset.edicao);
+
+        const totalEx = btn.dataset.total_exemplares || "0";
+        const dispEx  = btn.dataset.disponiveis || "0";
+        const resEx   = btn.dataset.reservados || "0";
+        const empEx   = btn.dataset.emprestados || "0";
+
+        document.getElementById("stat_total").textContent = totalEx;
+        document.getElementById("stat_disponiveis").textContent = dispEx;
+        document.getElementById("stat_reservados").textContent = resEx;
+        document.getElementById("stat_emprestados").textContent = empEx;
+
+        setVal("edit_tipo_capa", btn.dataset.tipo_capa || "");
+        setVal("edit_sinopse", btn.dataset.sinopse);
+        setVal("edit_localizacao", btn.dataset.localizacao || "");
+        setVal("edit_capa_atual", btn.dataset.capa || "");
+        setCoverPreview(btn.dataset.capa || "");
+
+        if (chkAplicarTodos) chkAplicarTodos.checked = false;
+
+        editForm.action = (btn.dataset.action || "#") + window.location.search;
+        openEditModal();
+      });
+    });
+
+    if(fileInput){
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if(!file) return;
+
+        const url = URL.createObjectURL(file);
+        coverImg.src = url;
+        coverImg.style.display = "block";
+        coverPlaceholder.style.display = "none";
+      });
+    }
+
+    btnCloseModal.addEventListener("click", closeEditModal);
+    btnCancelModal.addEventListener("click", closeEditModal);
+    editBackdrop.addEventListener("click", closeEditModal);
+
+    window.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && editModal.classList.contains("is-open")){
+        closeEditModal();
+      }
+    });
+  </script>
+</body>
+</html>

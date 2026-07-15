@@ -1,0 +1,542 @@
+{% from "_macros/avatar.html" import avatar_usuario %}
+
+{% set total_badge = (notificacoes_nao_lidas or 0) + (solicitacoes_count or 0) %}
+
+<header class="sticky top-0 z-40 border-b border-slate-200/60 bg-white/70 backdrop-blur-md">
+  <div class="container py-3">
+    <div class="flex items-center justify-between gap-3">
+      <!-- Brand -->
+      <a href="{{ url_for('main.home') }}" class="flex items-center gap-2.5">
+        <img src="{{ url_for('static', filename='uploads/logo2.png') }}"
+             alt="LiteraWEB"
+             class="h-9 w-auto object-contain">
+        <span class="font-extrabold tracking-tight">LiteraWEB</span>
+      </a>
+
+      <!-- Nav desktop -->
+      <nav class="hidden md:flex items-center gap-2" aria-label="Navegação principal">
+        <a class="px-3 py-2 rounded-xl text-sm font-extrabold
+           {% if request.endpoint == 'main.home' %}
+             text-sky-700 bg-sky-50 ring-1 ring-sky-200
+           {% else %}
+             text-slate-600 hover:text-slate-900 hover:bg-slate-100
+           {% endif %}"
+           href="{{ url_for('main.home') }}">
+          Início
+        </a>
+
+        <a class="px-3 py-2 rounded-xl text-sm font-extrabold
+           {% if request.endpoint in ['main.acervo', 'main.livro_detalhe'] %}
+             text-sky-700 bg-sky-50 ring-1 ring-sky-200
+           {% else %}
+             text-slate-600 hover:text-slate-900 hover:bg-slate-100
+           {% endif %}"
+           href="{{ url_for('main.acervo') }}">
+          Acervo
+        </a>
+
+        <a class="px-3 py-2 rounded-xl text-sm font-extrabold
+           {% if request.endpoint == 'main.quem_somos' %}
+             text-sky-700 bg-sky-50 ring-1 ring-sky-200
+           {% else %}
+             text-slate-600 hover:text-slate-900 hover:bg-slate-100
+           {% endif %}"
+           href="{{ url_for('main.quem_somos') }}">
+          Quem somos
+        </a>
+
+        <a class="px-3 py-2 rounded-xl text-sm font-extrabold
+           {% if request.endpoint and request.endpoint.startswith('forum.') %}
+             text-sky-700 bg-sky-50 ring-1 ring-sky-200
+           {% else %}
+             text-slate-600 hover:text-slate-900 hover:bg-slate-100
+           {% endif %}"
+           href="{{ url_for('forum.lista_topicos') }}">
+          Fórum
+        </a>
+      </nav>
+
+      <!-- Actions -->
+      <div class="hidden md:flex items-center gap-2">
+        {% if session.get("funcionario_id") %}
+          <a class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50"
+             href="{{ url_for('funcionario.painel') }}">
+            Painel funcionário
+          </a>
+
+          <a class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50"
+             href="{{ url_for('forum.painel_moderacao_forum') }}">
+            Painel do Fórum
+          </a>
+
+          <a class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-rose-600 to-orange-500 px-4 py-2 text-sm font-extrabold text-white shadow hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-rose-200"
+             href="{{ url_for('auth.sair') }}">
+            Sair
+          </a>
+
+        {% elif session.get("usuario_id") %}
+
+          <!-- SINO DE NOTIFICAÇÕES -->
+          <div class="relative" id="notifWrap">
+            <button type="button"
+                    id="notifBtn"
+                    aria-label="Notificações"
+                    aria-haspopup="dialog"
+                    aria-expanded="false"
+                    class="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/>
+              </svg>
+
+              <span id="notifTotalBadge"
+                    class="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.35rem] items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white shadow {% if total_badge <= 0 %}hidden{% endif %}">
+                {{ total_badge if total_badge < 100 else '99+' }}
+              </span>
+            </button>
+
+            <div id="notifDropdown"
+                 class="hidden absolute right-0 mt-3 w-[24rem] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl z-50"
+                 role="dialog"
+                 aria-label="Central de notificações">
+
+              <!-- TABS -->
+              <div class="border-b border-slate-200 bg-slate-50/80 px-4 pt-4">
+                <div class="flex items-end gap-2">
+                  <button type="button"
+                          class="notif-tab-btn inline-flex items-center gap-2 rounded-t-2xl border border-slate-200 border-b-white bg-white px-4 py-2.5 text-sm font-extrabold text-slate-900"
+                          data-notif-tab-target="tab-notificacoes"
+                          aria-selected="true">
+                    Notificações
+                    <span id="notifAbaBadge"
+                          class="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-extrabold text-sky-700 {% if notificacoes_nao_lidas <= 0 %}hidden{% endif %}">
+                      {{ notificacoes_nao_lidas if notificacoes_nao_lidas < 100 else '99+' }}
+                    </span>
+                  </button>
+
+                  <button type="button"
+                          class="notif-tab-btn inline-flex items-center gap-2 rounded-t-2xl border border-transparent bg-transparent px-4 py-2.5 text-sm font-extrabold text-slate-500 hover:bg-white/70 hover:text-slate-700"
+                          data-notif-tab-target="tab-solicitacoes"
+                          aria-selected="false">
+                    Solicitações
+                    <span id="solicitacoesAbaBadge"
+                          class="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-rose-700 {% if solicitacoes_count <= 0 %}hidden{% endif %}">
+                      {{ solicitacoes_count if solicitacoes_count < 100 else '99+' }}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PAINÉIS -->
+              <div class="max-h-[28rem] overflow-y-auto">
+                <!-- ABA: NOTIFICAÇÕES -->
+                <div id="tab-notificacoes" class="notif-tab-panel">
+                  <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                    <strong class="text-sm font-extrabold text-slate-900">Notificações</strong>
+
+                    <form method="post"
+                          action="{{ url_for('forum.marcar_todas_notificacoes_lidas') }}"
+                          data-ajax-form>
+                      <button type="submit"
+                              class="text-sm font-extrabold text-sky-700 hover:text-sky-800">
+                        Marcar todas
+                      </button>
+                    </form>
+                  </div>
+
+                  <div id="notifList" class="divide-y divide-slate-100">
+                    {% if notificacoes_nav %}
+                      {% for n in notificacoes_nav %}
+                        <a href="{{ url_for('forum.abrir_notificacao', notificacao_id=n.id) }}"
+                           class="block px-4 py-4 transition hover:bg-slate-50 {{ 'bg-sky-50/60' if not n.lida else 'bg-white' }}">
+                          <div class="text-base font-extrabold leading-snug text-slate-900">
+                            {{ n.titulo }}
+                          </div>
+                          <div class="mt-1 text-sm font-semibold leading-relaxed text-slate-600">
+                            {{ n.mensagem }}
+                          </div>
+                          <div class="mt-2 text-sm font-extrabold text-sky-700">
+                            {{ n.criada_em|dtbr }}
+                          </div>
+                        </a>
+                      {% endfor %}
+                    {% else %}
+                      <div class="px-4 py-6 text-sm font-semibold text-slate-500">
+                        Nenhuma notificação.
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- ABA: SOLICITAÇÕES -->
+                <div id="tab-solicitacoes" class="notif-tab-panel hidden">
+                  <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                    <strong class="text-sm font-extrabold text-slate-900">Solicitações</strong>
+                    <span id="solicitacoesCountText" class="text-xs font-extrabold text-slate-500">
+                      {{ solicitacoes_count or 0 }} pendente(s)
+                    </span>
+                  </div>
+
+                  <div id="solicitacoesList" class="space-y-3 p-4">
+                    {% include "_includes/forum_solicitacoes_lista.html" %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- MENU DO USUÁRIO -->
+          <div class="relative" data-user-menu>
+            <button type="button"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-sky-100"
+                    aria-haspopup="menu"
+                    aria-expanded="false"
+                    onclick="toggleUserMenu(event)">
+              {% set foto = session.get("usuario_foto") %}
+              {% if foto %}
+                <img src="{{ url_for('static', filename=foto) }}"
+                     alt="Foto de {{ session.get('nome_usuario','Usuário') }}"
+                     class="h-8 w-8 rounded-xl object-cover border border-slate-200"
+                     loading="lazy"
+                     decoding="async">
+              {% else %}
+                <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 text-white grid place-items-center font-extrabold">
+                  {{ (session.get('nome_usuario','U')[:1] | upper) }}
+                </div>
+              {% endif %}
+
+              <span class="max-w-[160px] truncate">
+                {{ session.get("nome_usuario", "Minha conta") }}
+              </span>
+
+              <span class="text-slate-400">▾</span>
+            </button>
+
+            <div class="user-menu hidden absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-soft overflow-hidden z-50"
+                 role="menu">
+              <a href="{{ url_for('main.perfil') }}"
+                 class="block px-4 py-3 text-sm font-extrabold text-slate-700 hover:bg-slate-100"
+                 role="menuitem">
+                Meu perfil
+              </a>
+
+              <a href="{{ url_for('main.minhas_reservas') }}"
+                 class="block px-4 py-3 text-sm font-extrabold text-slate-700 hover:bg-slate-100"
+                 role="menuitem">
+                Minhas reservas
+              </a>
+
+              <div class="h-px bg-slate-200"></div>
+
+              <a href="{{ url_for('auth.sair') }}"
+                 class="block px-4 py-3 text-sm font-extrabold text-rose-600 hover:bg-rose-50"
+                 role="menuitem">
+                Sair
+              </a>
+            </div>
+          </div>
+
+        {% else %}
+          <a class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-extrabold text-slate-700 hover:bg-slate-50"
+             href="{{ url_for('auth.cadastro') }}">
+            Cadastre-se
+          </a>
+
+          <a class="inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-500 px-4 py-2 text-sm font-extrabold text-white shadow hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-sky-200"
+             href="{{ url_for('auth.login') }}">
+            Entrar
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Burger -->
+      <button class="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/85 hover:bg-white"
+              type="button" aria-label="Abrir menu" onclick="openMenu(true)">
+        ☰
+      </button>
+    </div>
+  </div>
+</header>
+
+{% include "_includes/mobile_nav.html" %}
+
+<script>
+  (function () {
+    const backdrop = document.getElementById("backdrop");
+    const mnav = document.getElementById("mnav");
+
+    const notifWrap = document.getElementById("notifWrap");
+    const notifBtn = document.getElementById("notifBtn");
+    const notifDropdown = document.getElementById("notifDropdown");
+
+    const notifTotalBadge = document.getElementById("notifTotalBadge");
+    const notifAbaBadge = document.getElementById("notifAbaBadge");
+    const solicitacoesAbaBadge = document.getElementById("solicitacoesAbaBadge");
+    const solicitacoesCountText = document.getElementById("solicitacoesCountText");
+    const notifList = document.getElementById("notifList");
+    const solicitacoesList = document.getElementById("solicitacoesList");
+
+    let pollingId = null;
+    let carregandoCentral = false;
+
+    function openMenu(open) {
+      if (!backdrop || !mnav) return;
+      backdrop.classList.toggle("hidden", !open);
+      mnav.style.transform = open ? "translateX(0)" : "translateX(120%)";
+    }
+
+    function closeAllUserMenus() {
+      document.querySelectorAll("[data-user-menu] .user-menu").forEach((menu) => {
+        menu.classList.add("hidden");
+      });
+
+      document.querySelectorAll("[data-user-menu] button[aria-expanded]").forEach((btn) => {
+        btn.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    function toggleUserMenu(ev) {
+      ev.stopPropagation();
+
+      closeNotifDropdown();
+
+      const root = ev.currentTarget.closest("[data-user-menu]");
+      if (!root) return;
+
+      const menu = root.querySelector(".user-menu");
+      if (!menu) return;
+
+      document.querySelectorAll("[data-user-menu] .user-menu").forEach((m) => {
+        if (m !== menu) m.classList.add("hidden");
+      });
+
+      const willOpen = menu.classList.contains("hidden");
+      menu.classList.toggle("hidden", !willOpen);
+      ev.currentTarget.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    }
+
+    function closeNotifDropdown() {
+      if (!notifDropdown) return;
+      notifDropdown.classList.add("hidden");
+      if (notifBtn) notifBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function openNotifDropdown() {
+      if (!notifDropdown) return;
+      notifDropdown.classList.remove("hidden");
+      if (notifBtn) notifBtn.setAttribute("aria-expanded", "true");
+    }
+
+    function initNotifTabs() {
+      const buttons = Array.from(document.querySelectorAll(".notif-tab-btn"));
+      const panels = Array.from(document.querySelectorAll(".notif-tab-panel"));
+
+      if (!buttons.length || !panels.length) return;
+
+      function activateTab(targetId) {
+        panels.forEach((panel) => {
+          panel.classList.toggle("hidden", panel.id !== targetId);
+        });
+
+        buttons.forEach((btn) => {
+          const active = btn.getAttribute("data-notif-tab-target") === targetId;
+          btn.setAttribute("aria-selected", active ? "true" : "false");
+
+          btn.classList.toggle("border-slate-200", active);
+          btn.classList.toggle("border-b-white", active);
+          btn.classList.toggle("bg-white", active);
+          btn.classList.toggle("text-slate-900", active);
+
+          btn.classList.toggle("border-transparent", !active);
+          btn.classList.toggle("bg-transparent", !active);
+          btn.classList.toggle("text-slate-500", !active);
+        });
+      }
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          activateTab(btn.getAttribute("data-notif-tab-target"));
+        });
+      });
+
+      activateTab("tab-notificacoes");
+    }
+
+    function setBadge(el, value) {
+      if (!el) return;
+      const n = Number(value || 0);
+      el.textContent = n > 99 ? "99+" : String(n);
+      el.classList.toggle("hidden", n <= 0);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text || "";
+      return div.innerHTML;
+    }
+
+    function formatDate(isoString) {
+      if (!isoString) return "-";
+      const d = new Date(isoString);
+      if (Number.isNaN(d.getTime())) return "-";
+
+      return d.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function renderNotificacoes(lista) {
+      if (!notifList) return;
+
+      if (!Array.isArray(lista) || !lista.length) {
+        notifList.innerHTML = `
+          <div class="px-4 py-6 text-sm font-semibold text-slate-500">
+            Nenhuma notificação.
+          </div>
+        `;
+        return;
+      }
+
+      notifList.innerHTML = lista.map((n) => `
+        <a href="${escapeHtml(n.link_abrir || "#")}"
+           class="block px-4 py-4 transition hover:bg-slate-50 ${n.lida ? "bg-white" : "bg-sky-50/60"}">
+          <div class="text-base font-extrabold leading-snug text-slate-900">
+            ${escapeHtml(n.titulo || "")}
+          </div>
+          <div class="mt-1 text-sm font-semibold leading-relaxed text-slate-600">
+            ${escapeHtml(n.mensagem || "")}
+          </div>
+          <div class="mt-2 text-sm font-extrabold text-sky-700">
+            ${escapeHtml(n.criada_em_formatada || "-")}
+          </div>
+        </a>
+      `).join("");
+    }
+
+    function renderSolicitacoes(html) {
+      if (!solicitacoesList) return;
+
+      solicitacoesList.innerHTML = html || `
+        <div class="rounded-2xl border border-slate-200 bg-white px-4 py-5 text-sm font-semibold text-slate-500">
+          Você não tem solicitações pendentes.
+        </div>
+      `;
+    }
+
+    async function atualizarCentralNotificacoes() {
+      if (carregandoCentral) return;
+      carregandoCentral = true;
+
+      try {
+        const resp = await fetch("{{ url_for('forum.api_navbar_forum') }}", {
+          method: "GET",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!resp.ok) return;
+
+        const data = await resp.json();
+        if (!data.ok) return;
+
+        setBadge(notifTotalBadge, data.total_badge);
+        setBadge(notifAbaBadge, data.notificacoes_nao_lidas);
+        setBadge(solicitacoesAbaBadge, data.solicitacoes_count);
+
+        if (solicitacoesCountText) {
+          solicitacoesCountText.textContent = `${data.solicitacoes_count || 0} pendente(s)`;
+        }
+
+        renderNotificacoes(data.notificacoes || []);
+        renderSolicitacoes(data.html_solicitacoes || "");
+      } catch (err) {
+        console.error("Erro ao atualizar central de notificações:", err);
+      } finally {
+        carregandoCentral = false;
+      }
+    }
+
+    async function enviarFormAjax(form) {
+      try {
+        const resp = await fetch(form.action, {
+          method: form.method || "POST",
+          body: new FormData(form),
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!resp.ok) return;
+        await atualizarCentralNotificacoes();
+      } catch (err) {
+        console.error("Erro ao enviar formulário AJAX:", err);
+      }
+    }
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener("click", async function (ev) {
+        ev.stopPropagation();
+        closeAllUserMenus();
+
+        const willOpen = notifDropdown.classList.contains("hidden");
+        if (willOpen) {
+          openNotifDropdown();
+          await atualizarCentralNotificacoes();
+        } else {
+          closeNotifDropdown();
+        }
+      });
+    }
+
+    if (notifDropdown) {
+      notifDropdown.addEventListener("submit", async function (ev) {
+        const form = ev.target.closest("form[data-ajax-form]");
+        if (!form) return;
+
+        ev.preventDefault();
+        ev.stopPropagation();
+        await enviarFormAjax(form);
+      });
+    }
+
+    document.addEventListener("click", function (e) {
+      closeAllUserMenus();
+
+      if (notifWrap && !notifWrap.contains(e.target)) {
+        closeNotifDropdown();
+      }
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      closeAllUserMenus();
+      closeNotifDropdown();
+      openMenu(false);
+    });
+
+    window.addEventListener("resize", function () {
+      if (window.innerWidth >= 768) {
+        openMenu(false);
+      }
+    });
+
+    function iniciarPolling() {
+      if (pollingId) clearInterval(pollingId);
+      pollingId = setInterval(atualizarCentralNotificacoes, 8000);
+    }
+
+    window.openMenu = openMenu;
+    window.toggleUserMenu = toggleUserMenu;
+
+    initNotifTabs();
+    atualizarCentralNotificacoes();
+    iniciarPolling();
+  })();
+</script>
