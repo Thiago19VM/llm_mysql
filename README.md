@@ -4,11 +4,11 @@
 
 ## Visão geral
 
-O **LiteraWEB** é um projeto acadêmico de Trabalho de Conclusão de Curso desenvolvido em torno de um problema central:
+O **LiteraWEB** é um projeto desenvolvido em torno de um problema central:
 
 > **Como permitir que uma pessoa consulte regras e dados de um sistema corporativo usando linguagem natural, sem precisar conhecer SQL ou navegar por diversos relatórios?**
 
-Para investigar esse problema, foi construído um sistema de gerenciamento de biblioteca como contexto. O domínio da biblioteca funciona como o **contexto aplicado da solução de Inteligência Artificial**, fornecendo:
+Para esse problema, foi construído um sistema de gerenciamento de biblioteca como contexto. O domínio da biblioteca funciona como o **contexto aplicado da solução de Inteligência Artificial**, fornecendo:
 
 - dados relacionais;
 - regras de negócio;
@@ -79,7 +79,7 @@ O usuário pode receber:
 
 ## Arquitetura
 
-Durante o desenvolvimento do TCC, a aplicação web e o módulo de Inteligência Artificial eram executados separadamente.
+Durante o desenvolvimento, a aplicação web e o módulo de Inteligência Artificial eram executados separadamente.
 
 ```mermaid
 flowchart LR
@@ -119,7 +119,7 @@ Servidor de Inteligência Artificial
 └── LLM local
 ```
 
-A comunicação entre os serviços ocorre por HTTP. Portanto, o código do assistente está no mesmo repositório apenas para documentação e distribuição; ele continua sendo executado em um ambiente próprio.
+A comunicação entre os serviços ocorre por HTTP. Portanto, o código do assistente está no mesmo repositório apenas para documentação; ele continua sendo executado em um ambiente próprio.
 
 ---
 
@@ -207,7 +207,6 @@ Entre as regras adotadas estão:
 - impedir múltiplas instruções;
 - registrar a consulta gerada para análise.
 
-> Este é um projeto acadêmico e não deve ser tratado como uma solução de segurança pronta para produção. Em uma implantação real, a validação da aplicação deve ser combinada com um usuário de banco estritamente somente leitura e permissões mínimas.
 
 ### 8. Execução e interpretação
 
@@ -334,7 +333,7 @@ Também não são distribuídos:
 
 - Linux recomendado (Algo como Ubuntu Server ou similar);
 - Python compatível com as dependências;
-- GPU NVIDIA recomendada (No projeto foi utilizado uma 5060TI 16GB);
+- GPU NVIDIA (No projeto foi utilizado uma 5060TI 16GB);
 - CUDA e PyTorch compatíveis;
 - vLLM;
 - modelo de linguagem instalado separadamente;
@@ -433,7 +432,6 @@ RAG_API_URL=http://127.0.0.1:8010
 
 ## Limitações
 
-- O projeto foi desenvolvido em contexto acadêmico.
 - A LLM exige infraestrutura própria.
 - O desempenho depende do modelo, da GPU e da complexidade da pergunta.
 - O projeto não foi auditado para implantação em produção.
